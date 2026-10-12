@@ -52,7 +52,7 @@
     var wa = O.waLink(M.whatsapp || M.telefon, 'Merhaba, ' + M.ad + ' hakkında bilgi almak istiyorum.');
     var tel = String(M.telefon || '').replace(/[^\d+]/g, '');
     var harita = O.guvenliUrl(M.harita_url);
-    var logo = O.guvenliUrl(M.logo_url);
+    var logo = O.guvenliUrl(M.logo_url) || (window.AYAR && window.AYAR.LOGO) || '';
 
     var videolar = acik('shorts') ? D.video.filter(function (v) { return v.bolum === 'shorts'; }) : [];
     var ozelAcik = acik('cift_ozel');
@@ -85,7 +85,7 @@
     }
 
     if (galeri.length && acik('galeri')) {
-      h += '<div class="kisim k-galeri"><h2>Mekanımız</h2><div class="galeri"><div class="galeri-seri" id="galeriSeri">';
+      h += '<div class="kisim k-galeri" id="galeriK"><div class="baslik-satir"><h2>Mekanımız</h2><button type="button" class="btn hafif kucuk" data-islem="galeri">' + ik('galeri', 18) + 'Galeri (' + galeri.length + ')</button></div><div class="galeri"><div class="galeri-seri" id="galeriSeri">';
       galeri.forEach(function (f, i) {
         var u = O.guvenliUrl(f.url); if (!u) return;
         h += '<button type="button" data-foto="' + i + '" aria-label="' + esc(f.baslik || 'Fotoğrafı büyüt') + '"><img loading="lazy" src="' + esc(u) + '" alt="' + esc(f.baslik || M.ad) + '"></button>';
@@ -120,6 +120,7 @@
         (x.alt ? '<small class="alt-yazi">' + esc(x.alt) + '</small>' : '') + '</button>';
     }
     ISLEMLER = T.concat(K).filter(function (x) { return x.on && !x.yak; });
+    if (galeri.length && acik('galeri')) ISLEMLER.unshift({ k: 'galeri', ad: 'Galeri', i: 'galeri', on: true });
 
     var kutular = T.map(function (x) { return kutuHtml(x, false); }).join('');
     var kucukler = K.map(function (x) { return kutuHtml(x, true); }).join('');
@@ -187,7 +188,7 @@
   /* ---------- Olaylar ---------- */
   function islemCalistir(k, ek) {
     ({ fiyatlar: fiyatlarAc, teklif: function () { formAc('teklif', ek); }, talep: function () { formAc('talep', ek); },
-      firmalar: firmalarAc, menu: menuAc, ozellikler: ozelliklerAc, klipler: klipAc })[k]();
+      firmalar: firmalarAc, menu: menuAc, ozellikler: ozelliklerAc, klipler: klipAc, galeri: galeriAc })[k]();
   }
 
   function sekmeAc(i) {
@@ -279,16 +280,46 @@
   }
 
   /* ---------- Galeri büyütme ---------- */
+  function galeriAc() {
+    var h = '<div class="galeri-tum">';
+    GALERI.forEach(function (f, i) {
+      var u = O.guvenliUrl(f.url); if (!u) return;
+      h += '<button type="button" data-foto="' + i + '" aria-label="' + esc(f.baslik || 'Fotoğrafı büyüt') + '"><img loading="lazy" src="' + esc(u) + '" alt="' + esc(f.baslik || M.ad) + '"></button>';
+    });
+    pencere('Galeri', h + '</div>');
+  }
+
   function buyut(i) {
-    var f = GALERI[i]; if (!f) return;
+    if (!GALERI[i]) return;
     var l = document.createElement('div');
     l.className = 'lightbox'; l.setAttribute('role', 'dialog'); l.setAttribute('aria-label', 'Fotoğraf');
-    l.innerHTML = '<button class="kapat" aria-label="Kapat">' + ik('kapat', 26) + '</button><img alt="' + esc(f.baslik || M.ad) + '" src="' + esc(O.guvenliUrl(f.url)) + '">';
+    var coklu = GALERI.length > 1;
+    l.innerHTML = '<button class="kapat" aria-label="Kapat">' + ik('kapat', 26) + '</button>' +
+      (coklu ? '<button class="lb-ok sol" aria-label="Önceki">' + ik('sol', 28) + '</button><button class="lb-ok sag" aria-label="Sonraki">' + ik('sag', 28) + '</button>' : '') +
+      '<img alt=""><div class="lb-say"></div>';
+    var img = $('img', l), say = $('.lb-say', l);
+    function goster() {
+      var f = GALERI[i];
+      img.src = O.guvenliUrl(f.url) || ''; img.alt = f.baslik || M.ad;
+      say.textContent = (f.baslik ? f.baslik + '  ' : '') + (i + 1) + ' / ' + GALERI.length;
+    }
+    function git(d) { i = (i + d + GALERI.length) % GALERI.length; goster(); }
     function kapat() { l.remove(); document.removeEventListener('keydown', tus); }
-    function tus(e) { if (e.key === 'Escape') kapat(); }
-    l.addEventListener('click', kapat);
+    function tus(e) {
+      if (e.key === 'Escape') kapat();
+      else if (e.key === 'ArrowLeft' && coklu) git(-1);
+      else if (e.key === 'ArrowRight' && coklu) git(1);
+    }
+    l.addEventListener('click', function (e) {
+      if (e.target.closest('.lb-ok')) { git(e.target.closest('.lb-ok').classList.contains('sol') ? -1 : 1); return; }
+      if (e.target !== img) kapat();
+    });
+    var x0 = 0;
+    l.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+    l.addEventListener('touchend', function (e) { var dx = e.changedTouches[0].clientX - x0; if (coklu && Math.abs(dx) > 50) git(dx < 0 ? 1 : -1); }, { passive: true });
     document.addEventListener('keydown', tus);
     document.body.appendChild(l);
+    goster();
     $('.kapat', l).focus();
   }
 

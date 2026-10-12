@@ -153,13 +153,14 @@
 @media (min-width: 960px) {
   :root { --kap: min(1200px, calc(100% - 80px)); }
   .sayfa { max-width: none; box-shadow: none; }
-  .ust { height: 76px; padding: 0 max(40px, calc((100% - 1200px) / 2)); gap: 24px; }
+  .ust { height: 76px; padding: 0 max(40px, calc((100% - 1200px) / 2)); gap: 16px; }
   .ust .marka { font-size: 24px; margin-right: auto; }
   .ust .marka img { height: 44px; }
   .ust-nav { display: flex; gap: 2px; }
-  .ust-nav button { min-height: 44px; padding: 0 14px; border: 0; border-radius: 10px; background: transparent; font-weight: 600; color: var(--ink-2); }
+  .ust-nav button { min-height: 44px; padding: 0 11px; white-space: nowrap; font-size: 15px; border: 0; border-radius: 10px; background: transparent; font-weight: 600; color: var(--ink-2); }
   .ust-nav button:hover { background: var(--bg); color: var(--ink); }
-  .ust-cta { display: inline-flex; }
+  .ust-cta { display: inline-flex; white-space: nowrap; flex: none; }
+  .ust .marka { flex: none; } .ust .marka span { overflow: visible; }
   .menu-dugme, .sekme { display: none; }
   .bolme, .bolme.aktif { display: block; }
 
@@ -252,3 +253,19 @@
 .serit .islem.mini { min-height: 54px; padding: 8px 4px; gap: 2px; align-items: center; justify-content: center; text-align: center; }
 .serit .islem.mini b { font-size: 12.5px; }
 @media (min-width: 960px) { .serit .islem.mini { min-height: 68px; } .serit .islem.mini b { font-size: 17px; } }
+
+/* Galeri sayfası ve büyük görüntüleyici */
+.baslik-satir { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+.baslik-satir h2 { margin: 0; }
+.pencere:has(.galeri-tum) { max-width: 1040px; }
+.galeri-tum { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.galeri-tum button { border: 0; padding: 0; background: #d9dce2; border-radius: var(--r); overflow: hidden; aspect-ratio: 4 / 3; }
+.galeri-tum img { width: 100%; height: 100%; object-fit: cover; transition: transform .25s; }
+.galeri-tum button:hover img { transform: scale(1.04); }
+@media (min-width: 720px) { .galeri-tum { grid-template-columns: repeat(3, 1fr); gap: 12px; } }
+.lightbox img { cursor: default; }
+.lb-ok { position: absolute; top: calc(50% - 26px); width: 52px; height: 52px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, .16); color: #fff; display: grid; place-items: center; }
+.lb-ok:hover { background: rgba(255, 255, 255, .3); }
+.lb-ok.sol { left: 12px; } .lb-ok.sag { right: 12px; }
+.lb-say { position: absolute; bottom: 14px; left: 0; right: 0; text-align: center; color: #fff; font-size: 14px; opacity: .85; padding: 0 16px; }
+@media (max-width: 600px) { .lb-ok { width: 44px; height: 44px; top: calc(50% - 22px); } .lb-ok.sol { left: 6px; } .lb-ok.sag { right: 6px; } }
