@@ -139,7 +139,7 @@
       (wa ? '<a href="' + esc(wa) + '" target="_blank" rel="noopener">' + ik('whatsapp', 26) + 'WhatsApp</a>' : '') +
       (tel ? '<a href="tel:' + esc(tel) + '">' + ik('telefon', 26) + 'Ara</a>' : '') +
       (harita ? '<a href="' + esc(harita) + '" target="_blank" rel="noopener">' + ik('konum', 26) + 'Konum</a>' : '') +
-      '</div>' + (M.adres ? '<p class="adres">' + esc(M.adres) + '</p>' : '') + '</div></div>';
+      '</div>' + (M.adres ? '<p class="adres">' + esc(M.adres) + '</p>' : '') + haritaHtml(harita) + '</div></div>';
 
     h += '</section>';
 
@@ -181,6 +181,16 @@
     GALERI = galeri;
     bagla();
     cerezUyari();
+  }
+
+  /* Gömülü harita: koordinat harita bağlantısındaki @enlem,boylam'dan ya da config.js KONUM'dan gelir */
+  function haritaHtml(url) {
+    var k = null, m = String(url || '').match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (m) k = { lat: m[1], lng: m[2] };
+    else if (window.AYAR && window.AYAR.KONUM) k = window.AYAR.KONUM;
+    if (!k) return '';
+    var src = 'https://www.google.com/maps?q=' + encodeURIComponent(k.lat + ',' + k.lng) + '&z=16&hl=tr&output=embed';
+    return '<div class="harita"><iframe title="' + esc(M.ad) + ' konumu" src="' + esc(src) + '" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe></div>';
   }
 
   var ISLEMLER = [], VIDEOLAR = [], KLIPLER = [], GALERI = [];

@@ -269,3 +269,8 @@
 .lb-ok.sol { left: 12px; } .lb-ok.sag { right: 12px; }
 .lb-say { position: absolute; bottom: 14px; left: 0; right: 0; text-align: center; color: #fff; font-size: 14px; opacity: .85; padding: 0 16px; }
 @media (max-width: 600px) { .lb-ok { width: 44px; height: 44px; top: calc(50% - 22px); } .lb-ok.sol { left: 6px; } .lb-ok.sag { right: 6px; } }
+
+/* Gömülü harita */
+.harita { margin-top: 14px; border-radius: var(--r-lg); overflow: hidden; background: #d9dce2; aspect-ratio: 4 / 3; box-shadow: var(--gol); }
+.harita iframe { width: 100%; height: 100%; border: 0; display: block; }
+@media (min-width: 960px) { .harita { aspect-ratio: auto; height: 320px; } }
