@@ -295,3 +295,19 @@
   .alt-iletisim { grid-column: 1 / -1; text-align: left; }
   .alt-alt { grid-column: 1 / -1; justify-content: space-between; }
 }
+
+/* Hakkımızda bandı */
+.hakkimizda { position: relative; margin: 56px 0 0; min-height: 320px; display: grid; align-items: center; color: #fff; overflow: hidden; background: #2b2327; }
+.hakkimizda > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.hakkimizda::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(90deg, rgba(20, 14, 17, .88), rgba(20, 14, 17, .55)); }
+.hk-ic { position: relative; z-index: 2; padding: 44px 20px; max-width: 760px; }
+.hk-ic h2 { margin: 0 0 6px; font: 600 28px/1.2 var(--serif); }
+.hk-etiket { margin: 0 0 14px; font-size: 14px; opacity: .8; letter-spacing: .02em; }
+.hk-ic p { margin: 0 0 12px; font-size: 16px; line-height: 1.7; }
+.alt-etiket { margin: -8px 0 0; font-size: 13px; color: #9a9ea8; }
+@media (min-width: 960px) {
+  .hakkimizda { min-height: 400px; margin-top: 88px; }
+  .hk-ic { padding: 72px 0; margin-left: max(40px, calc((100% - 1200px) / 2)); }
+  .hk-ic h2 { font-size: 38px; }
+  .hk-ic p { font-size: 18px; }
+}

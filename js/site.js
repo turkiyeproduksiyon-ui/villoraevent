@@ -49,6 +49,7 @@
     O.renkUygula(M.ana_renk);
     document.title = M.ad + ' | Düğün ve organizasyon';
 
+    var AY0 = window.AYAR || {};
     var galeri = D.foto.filter(function (f) { return f.tur === 'galeri'; });
     if (!galeri.length && window.AYAR && window.AYAR.GALERI) galeri = window.AYAR.GALERI.map(function (u, i) { return { url: u, baslik: '' }; });   // geçici: mekan fotoğrafı yüklenene kadar
     var heroFoto = M.hero_url || (D.foto.filter(function (f) { return f.tur === 'hero'; })[0] || {}).url || (window.AYAR && window.AYAR.HERO) || (galeri[0] || {}).url || '';
@@ -147,6 +148,14 @@
       (harita ? '<a href="' + esc(harita) + '" target="_blank" rel="noopener">' + ik('konum', 26) + 'Konum</a>' : '') +
       '</div>' + (M.adres ? '<p class="adres">' + esc(M.adres) + '</p>' : '') + haritaHtml(harita) + '</div></div>';
 
+    /* Hakkımızda bandı: yazı panelden (hakkinda) ya da config.js'ten gelir */
+    if (acik('hakkimizda') && M.hakkinda) {
+      var hkFoto = O.guvenliUrl((galeri[2] || galeri[0] || {}).url || heroFoto);
+      h += '<section class="hakkimizda" id="hakkimizdaK">' + (hkFoto ? '<img src="' + esc(hkFoto) + '" alt="" loading="lazy">' : '') +
+        '<div class="hk-ic"><h2>Hakkımızda</h2>' + (AY0.ETIKET ? '<p class="hk-etiket">' + esc(AY0.ETIKET) + '</p>' : '') +
+        String(M.hakkinda).split(/\n{2,}/).map(function (p) { return '<p>' + esc(p.trim()).replace(/\n/g, '<br>') + '</p>'; }).join('') + '</div></section>';
+    }
+
     h += '</section>';
 
     /* Bölme 2: mini uygulamalar, çiftlere özel, kısa videolar */
@@ -189,6 +198,7 @@
     if (webUrl) fl += '<a href="' + esc(webUrl) + '" target="_blank" rel="noopener" aria-label="Web sitesi">' + ik('web', 22) + '</a>';
     h += '<footer class="alt-bilgi"><div class="alt-ic">' +
       '<div class="alt-marka">' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + '<b>' + esc(M.ad) + '</b></div>' +
+      (AY0.ETIKET ? '<p class="alt-etiket">' + esc(AY0.ETIKET) + '</p>' : '') +
       (fl ? '<div class="alt-link">' + fl + '</div>' : '') +
       ((tel || M.adres) ? '<p class="alt-iletisim">' + (tel ? '<a href="tel:' + esc(tel) + '">' + esc(M.telefon) + '</a>' : '') + (tel && M.adres ? '<br>' : '') + (M.adres ? esc(M.adres) : '') + '</p>' : '') +
       '<div class="alt-alt"><span>© ' + new Date().getFullYear() + ' ' + esc(M.ad) + '. Tüm hakları saklıdır.</span>' +

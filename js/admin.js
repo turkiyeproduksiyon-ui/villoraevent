@@ -676,7 +676,7 @@
   }
 
   /* ================= SİTE AYARI ================= */
-  var BOLUMLER = [['tarih_sorgu', 'Tarih müsaitlik sorgusu'], ['galeri', 'Galeri'], ['fiyatlar', 'Güncel fiyatlar'], ['teklif', 'Teklif al'], ['talep', 'Talep gir'], ['menu', 'Menü'], ['ozellikler', 'Mekan özellikleri'], ['firmalar', 'Anlaşmalı firmalar'], ['cift_ozel', 'Çiftlere özel giriş'], ['shorts', 'Kısa videolar'], ['klipler', 'Kliplerimiz (klip videoları)'], ['yakinda', 'Hazır olmayan kutuları "Yakında" diye göster']];
+  var BOLUMLER = [['tarih_sorgu', 'Tarih müsaitlik sorgusu'], ['galeri', 'Galeri'], ['hakkimizda', 'Hakkımızda bandı'], ['fiyatlar', 'Güncel fiyatlar'], ['teklif', 'Teklif al'], ['talep', 'Talep gir'], ['menu', 'Menü'], ['ozellikler', 'Mekan özellikleri'], ['firmalar', 'Anlaşmalı firmalar'], ['cift_ozel', 'Çiftlere özel giriş'], ['shorts', 'Kısa videolar'], ['klipler', 'Kliplerimiz (klip videoları)'], ['yakinda', 'Hazır olmayan kutuları "Yakında" diye göster']];
   function ayarCiz() {
     var b = M.bolumler || {};
     function gorselAlan(ad, e, deger, yardim) {
@@ -695,6 +695,7 @@
       '<h2 class="alt-baslik">Açılış sayfası</h2>' + ta('ana_baslik', 'Ana başlık', { p: 'Boş bırakırsanız mekan adı yazar' }) + '<label class="alan"><span>Ana yazı</span><textarea name="ana_yazi" rows="2">' + esc(M.ana_yazi || '') + '</textarea></label>' +
       gorselAlan('hero_url', 'Açılış görseli', M.hero_url, 'Yatay, geniş bir fotoğraf iyi görünür.') + gorselAlan('logo_url', 'Logo', M.logo_url, 'Saydam arka planlı PNG önerilir.') +
       '<label class="alan"><span>Site rengi</span><input name="ana_renk" type="color" value="' + esc(/^#[0-9a-f]{6}$/i.test(M.ana_renk || '') ? M.ana_renk : '#7a1f3d') + '" style="min-height:52px;padding:4px"></label>' +
+      '<h2 class="alt-baslik">Hakkımızda yazısı</h2><label class="alan"><span>Yazı <em>(paragraflar arasında boş satır bırakın)</em></span><textarea name="hakkinda" rows="6">' + esc(M.hakkinda || '') + '</textarea></label>' +
       '<h2 class="alt-baslik">Erken rezervasyon indirimi</h2><label class="onay"><input type="checkbox" name="erken_rez_aktif"' + (M.erken_rez_aktif ? ' checked' : '') + '><span>Sitede göster</span></label>' +
       '<div class="ikili"><label class="alan"><span>İndirim oranı (%)</span><input name="erken_rez_oran" type="number" min="0" max="100" value="' + esc(M.erken_rez_oran) + '"></label><label class="alan"><span>En az kaç ay önceden</span><input name="erken_rez_ay" type="number" min="0" value="' + esc(M.erken_rez_ay) + '"></label></div>' +
       '<h2 class="alt-baslik">Sitede görünecek bölümler</h2><div class="bolum-sec">' + BOLUMLER.map(function (x) { return '<label class="onay"><input type="checkbox" name="b_' + x[0] + '"' + (b[x[0]] === false ? '' : ' checked') + '><span>' + esc(x[1]) + '</span></label>'; }).join('') + '</div>' +
@@ -718,7 +719,7 @@
     var o = { ad: v('ad'), yetkili_ad: v('yetkili_ad') || null, telefon: v('telefon') || null, whatsapp: v('whatsapp') || null, eposta: v('eposta') || null, instagram: v('instagram') || null, facebook: v('facebook') || null, youtube: v('youtube') || null, tiktok: v('tiktok') || null,
       web: O.guvenliUrl(v('web')) || null, harita_url: O.guvenliUrl(v('harita_url')) || null, adres: v('adres') || null, ana_baslik: v('ana_baslik') || null, ana_yazi: v('ana_yazi') || null,
       hero_url: v('hero_url') || null, logo_url: v('logo_url') || null, ana_renk: v('ana_renk'), erken_rez_aktif: f.elements.erken_rez_aktif.checked,
-      erken_rez_oran: Math.min(100, Math.max(0, sayi(v('erken_rez_oran')) || 0)), erken_rez_ay: Math.max(0, sayi(v('erken_rez_ay')) || 0), bolumler: b, kvkk_metni: v('kvkk_metni') || null };
+      erken_rez_oran: Math.min(100, Math.max(0, sayi(v('erken_rez_oran')) || 0)), erken_rez_ay: Math.max(0, sayi(v('erken_rez_ay')) || 0), bolumler: b, kvkk_metni: v('kvkk_metni') || null, hakkinda: v('hakkinda') || null };
     try {
       M = await guncelle('mekanlar', M.id, o); O.renkUygula(M.ana_renk);
       var ad = $('.p-marka b'); if (ad) ad.textContent = M.ad;
