@@ -676,7 +676,7 @@
   }
 
   /* ================= SİTE AYARI ================= */
-  var BOLUMLER = [['tarih_sorgu', 'Tarih müsaitlik sorgusu'], ['galeri', 'Galeri'], ['fiyatlar', 'Güncel fiyatlar'], ['teklif', 'Teklif al'], ['talep', 'Talep gir'], ['menu', 'Menü'], ['ozellikler', 'Mekan özellikleri'], ['firmalar', 'Anlaşmalı firmalar'], ['cift_ozel', 'Çiftlere özel giriş'], ['shorts', 'Kısa videolar']];
+  var BOLUMLER = [['tarih_sorgu', 'Tarih müsaitlik sorgusu'], ['galeri', 'Galeri'], ['fiyatlar', 'Güncel fiyatlar'], ['teklif', 'Teklif al'], ['talep', 'Talep gir'], ['menu', 'Menü'], ['ozellikler', 'Mekan özellikleri'], ['firmalar', 'Anlaşmalı firmalar'], ['cift_ozel', 'Çiftlere özel giriş'], ['shorts', 'Kısa videolar'], ['klipler', 'Kliplerimiz (klip videoları)'], ['yakinda', 'Hazır olmayan kutuları "Yakında" diye göster']];
   function ayarCiz() {
     var b = M.bolumler || {};
     function gorselAlan(ad, e, deger, yardim) {

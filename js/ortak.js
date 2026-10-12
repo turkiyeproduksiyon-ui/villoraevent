@@ -68,6 +68,8 @@
     kalem: '<path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/>',
     tabak: '<path d="M7 3v8M5 3v5a2 2 0 004 0V3M7 11v10M17 3c-2 2-3 4-3 7h3v11"/>',
     yildiz: '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/>',
+    muzik: '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>',
+    makyaj: '<path d="M8 21v-6h8v6zM9 15v-4h6v4M10 11V5.5L14 3v8"/>',
     el: '<path d="M3 11l4-4 5 2 5-2 4 4-7 8a2 2 0 01-3 0z"/>',
     hediye: '<rect x="3" y="9" width="18" height="12" rx="1"/><path d="M12 9v12M3 13h18M12 9c-3-5-7-3-5 0M12 9c3-5 7-3 5 0"/>',
     oynat: '<path d="M8 5v14l11-7z"/>',
