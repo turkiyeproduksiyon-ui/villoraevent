@@ -48,7 +48,8 @@
     document.title = M.ad + ' | Düğün ve organizasyon';
 
     var galeri = D.foto.filter(function (f) { return f.tur === 'galeri'; });
-    var heroFoto = M.hero_url || (D.foto.filter(function (f) { return f.tur === 'hero'; })[0] || {}).url || (galeri[0] || {}).url || '';
+    if (!galeri.length && window.AYAR && window.AYAR.GALERI) galeri = window.AYAR.GALERI.map(function (u, i) { return { url: u, baslik: '' }; });   // geçici: mekan fotoğrafı yüklenene kadar
+    var heroFoto = M.hero_url || (D.foto.filter(function (f) { return f.tur === 'hero'; })[0] || {}).url || (window.AYAR && window.AYAR.HERO) || (galeri[0] || {}).url || '';
     var wa = O.waLink(M.whatsapp || M.telefon, 'Merhaba, ' + M.ad + ' hakkında bilgi almak istiyorum.');
     var tel = String(M.telefon || '').replace(/[^\d+]/g, '');
     var harita = O.guvenliUrl(M.harita_url);
@@ -90,7 +91,10 @@
         var u = O.guvenliUrl(f.url); if (!u) return;
         h += '<button type="button" data-foto="' + i + '" aria-label="' + esc(f.baslik || 'Fotoğrafı büyüt') + '"><img loading="lazy" src="' + esc(u) + '" alt="' + esc(f.baslik || M.ad) + '"></button>';
       });
-      h += '</div><button class="galeri-ok sol" id="galSol" aria-label="Önceki">' + ik('sol') + '</button><button class="galeri-ok sag" id="galSag" aria-label="Sonraki">' + ik('sag') + '</button></div></div>';
+      h += '</div><button class="galeri-ok sol" id="galSol" aria-label="Önceki">' + ik('sol') + '</button><button class="galeri-ok sag" id="galSag" aria-label="Sonraki">' + ik('sag') + '</button></div>';
+      h += '<div class="galeri-nokta" id="galNokta" role="tablist" aria-label="Fotoğraf seçici">';
+      galeri.forEach(function (f, i) { h += '<button type="button" data-nokta="' + i + '" role="tab" aria-label="' + (i + 1) + '. fotoğraf"' + (i === 0 ? ' class="ak"' : '') + '></button>'; });
+      h += '</div></div>';
     }
 
     /* İşlemler: 4 sütunlu kutular (taslaktaki sıra) */
@@ -225,8 +229,21 @@
 
     var gs = $('#galeriSeri');
     if (gs) {
-      $('#galSol').addEventListener('click', function () { gs.scrollBy({ left: -gs.clientWidth * 0.8, behavior: 'smooth' }); });
-      $('#galSag').addEventListener('click', function () { gs.scrollBy({ left: gs.clientWidth * 0.8, behavior: 'smooth' }); });
+      var kartlar = $$('button', gs), noktalar = $$('#galNokta button');
+      function aktifIdx() {
+        if (gs.scrollLeft + gs.clientWidth >= gs.scrollWidth - 4) return kartlar.length - 1;
+        var en = 0, fark = 1e9;
+        kartlar.forEach(function (k, i) { var d = Math.abs(k.offsetLeft - gs.offsetLeft - gs.scrollLeft); if (d < fark) { fark = d; en = i; } });
+        return en;
+      }
+      function noktaGuncelle() { var a = aktifIdx(); noktalar.forEach(function (n, i) { n.classList.toggle('ak', i === a); }); }
+      function git(i) { i = Math.max(0, Math.min(kartlar.length - 1, i)); gs.scrollTo({ left: kartlar[i].offsetLeft - gs.offsetLeft, behavior: 'smooth' }); }
+      function adim() { return kartlar.length > 1 ? kartlar[1].offsetLeft - kartlar[0].offsetLeft : gs.clientWidth; }
+      $('#galSol').addEventListener('click', function () { gs.scrollBy({ left: -adim(), behavior: 'smooth' }); });
+      $('#galSag').addEventListener('click', function () { gs.scrollBy({ left: adim(), behavior: 'smooth' }); });
+      noktalar.forEach(function (n, i) { n.addEventListener('click', function () { git(i); }); });
+      gs.addEventListener('scroll', function () { window.requestAnimationFrame(noktaGuncelle); }, { passive: true });
+      if (kartlar.length < 2) { $('#galSol').classList.add('gizli'); $('#galSag').classList.add('gizli'); $('#galNokta').classList.add('gizli'); }
     }
     var t = $('#tarihSor');
     if (t) t.addEventListener('change', function () { tarihSor(t.value); });

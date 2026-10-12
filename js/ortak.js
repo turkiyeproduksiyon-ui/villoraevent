@@ -29,6 +29,7 @@
     u = String(u || '').trim();
     if (!u) return '';
     if (/^https?:\/\//i.test(u)) return u;
+    if (/^img\/[\w.-]+\.(jpe?g|png|webp)$/i.test(u)) return u;   // sitenin kendi img klasörü
     if (/^(www\.|[a-z0-9-]+\.[a-z]{2,})(\/|$)/i.test(u)) return 'https://' + u;
     return '';
   }
