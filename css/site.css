@@ -201,7 +201,6 @@
 
   .video-izgara { grid-template-columns: repeat(4, 1fr); gap: 16px; }
   .k-ozel .ozel { max-width: 640px; padding: 36px; }
-  .alt-bilgi { padding: 88px 20px 56px; }
   .cerez { max-width: 760px; }
 }
 @media (min-width: 960px) {
@@ -276,3 +275,23 @@
 .galeri-nokta button { width: 10px; height: 10px; padding: 0; border: 0; border-radius: 50%; background: #c4c7ce; transition: background .15s, width .2s; }
 .galeri-nokta button.ak { background: var(--accent); width: 26px; border-radius: 6px; }
 .acilis > img { object-position: 64% 35%; }
+
+/* Alt bilgi */
+.alt-bilgi { background: #17181c; color: #d9dce2; padding: 44px 20px 28px; margin-top: 56px; text-align: center; font-size: 14px; }
+.alt-ic { max-width: 1200px; margin: 0 auto; display: grid; gap: 18px; justify-items: center; }
+.alt-marka { display: flex; align-items: center; gap: 10px; color: #fff; font: 600 22px/1 var(--serif); }
+.alt-marka img { height: 40px; width: auto; }
+.alt-link { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.alt-link a { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .1); color: #fff; text-decoration: none; transition: background .15s; }
+.alt-link a:hover { background: var(--accent); }
+.alt-iletisim { margin: 0; line-height: 1.7; max-width: 46ch; }
+.alt-iletisim a { color: #fff; font-weight: 600; text-decoration: none; }
+.alt-alt { width: 100%; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, .14); display: flex; flex-wrap: wrap; gap: 6px 18px; justify-content: center; align-items: center; font-size: 13px; color: #9a9ea8; }
+.alt-bilgi .alt-alt button { border: 0; background: none; text-decoration: underline; color: inherit; padding: 8px; }
+@media (min-width: 960px) {
+  .alt-bilgi { padding: 64px 40px 32px; }
+  .alt-ic { grid-template-columns: 1fr auto; justify-items: start; align-items: center; row-gap: 22px; }
+  .alt-marka { grid-column: 1; } .alt-link { grid-column: 2; grid-row: 1; }
+  .alt-iletisim { grid-column: 1 / -1; text-align: left; }
+  .alt-alt { grid-column: 1 / -1; justify-content: space-between; }
+}

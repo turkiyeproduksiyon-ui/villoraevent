@@ -171,7 +171,21 @@
       h += '</section>';
     }
     h += '</main>';
-    h += '<footer class="alt-bilgi"><button type="button" id="kvkkAc">Aydınlatma metni</button><div>Evliliğe Evet ile hazırlandı</div></footer>';
+    var fl = '';
+    var igUrl = M.instagram ? O.instagramUrl(M.instagram) : '';
+    var webUrl = O.guvenliUrl(M.web);
+    if (igUrl) fl += '<a href="' + esc(igUrl) + '" target="_blank" rel="noopener" aria-label="Instagram">' + ik('instagram', 22) + '</a>';
+    if (wa) fl += '<a href="' + esc(wa) + '" target="_blank" rel="noopener" aria-label="WhatsApp">' + ik('whatsapp', 22) + '</a>';
+    if (tel) fl += '<a href="tel:' + esc(tel) + '" aria-label="Ara">' + ik('telefon', 22) + '</a>';
+    if (M.eposta) fl += '<a href="mailto:' + esc(M.eposta) + '" aria-label="E-posta">' + ik('eposta', 22) + '</a>';
+    if (harita) fl += '<a href="' + esc(harita) + '" target="_blank" rel="noopener" aria-label="Konum">' + ik('konum', 22) + '</a>';
+    if (webUrl) fl += '<a href="' + esc(webUrl) + '" target="_blank" rel="noopener" aria-label="Web sitesi">' + ik('web', 22) + '</a>';
+    h += '<footer class="alt-bilgi"><div class="alt-ic">' +
+      '<div class="alt-marka">' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + '<b>' + esc(M.ad) + '</b></div>' +
+      (fl ? '<div class="alt-link">' + fl + '</div>' : '') +
+      ((tel || M.adres) ? '<p class="alt-iletisim">' + (tel ? '<a href="tel:' + esc(tel) + '">' + esc(M.telefon) + '</a>' : '') + (tel && M.adres ? '<br>' : '') + (M.adres ? esc(M.adres) : '') + '</p>' : '') +
+      '<div class="alt-alt"><span>© ' + new Date().getFullYear() + ' ' + esc(M.ad) + '. Tüm hakları saklıdır.</span>' +
+      '<button type="button" id="kvkkAc">Aydınlatma metni</button><span>Evliliğe Evet ile hazırlandı</span></div></div></footer>';
 
     var nav = '<nav class="ust-nav" aria-label="Sayfa menüsü">';
     ISLEMLER.forEach(function (x) { if (x.k !== 'teklif' && x.k !== 'talep') nav += '<button type="button" data-islem="' + x.k + '">' + esc(x.ad) + '</button>'; });
