@@ -82,14 +82,26 @@
     M = null;
     $('#kok').innerHTML = '<div class="giris-kutu"><h1>Mekan paneli</h1><p class="not" style="margin:0 0 20px">E-posta ve şifrenizle giriş yapın.</p>' +
       '<form id="gf" novalidate><label class="alan"><span>E-posta</span><input name="e" type="email" autocomplete="username" inputmode="email" required></label>' +
-      '<label class="alan"><span>Şifre</span><input name="s" type="password" autocomplete="current-password" required></label>' +
+      '<label class="alan"><span>Şifre</span><span class="sifre-satir"><input name="s" type="password" autocomplete="current-password" required><button type="button" class="sifre-goster" id="sifreGoster" aria-pressed="false">Göster</button></span></label>' +
       '<div id="gh"></div><button class="btn ana tam" type="submit">Giriş yap</button></form></div>';
+    $('#sifreGoster').addEventListener('click', function () {
+      var inp = $('#gf').elements.s, ac = inp.type === 'password';
+      inp.type = ac ? 'text' : 'password';
+      this.textContent = ac ? 'Gizle' : 'Göster'; this.setAttribute('aria-pressed', ac ? 'true' : 'false');
+    });
     $('#gf').addEventListener('submit', async function (e) {
       e.preventDefault();
       var f = e.target, d = $('button', f); d.disabled = true;
       var r = await sb.auth.signInWithPassword({ email: f.e.value.trim(), password: f.s.value });
       d.disabled = false;
-      if (r.error) { $('#gh').innerHTML = '<div class="hata-kutu" role="alert">E-posta ya da şifre yanlış.</div>'; return; }
+      if (r.error) {
+        var gm = String(r.error.message || ''), gt;
+        if (/invalid login credentials/i.test(gm)) gt = 'E-posta ya da şifre yanlış.';
+        else if (/not confirmed/i.test(gm)) gt = 'Bu kullanıcının e-postası Supabase\'te onaylanmamış. Authentication > Users bölümünden kullanıcıyı onaylayın.';
+        else if (/rate limit|too many/i.test(gm)) gt = 'Çok fazla deneme yapıldı. Biraz bekleyip tekrar deneyin.';
+        else gt = 'Giriş yapılamadı. Teknik ayrıntı: ' + (gm || 'bilinmeyen hata') + (r.error.status ? ' (' + r.error.status + ')' : '');
+        $('#gh').innerHTML = '<div class="hata-kutu" role="alert">' + esc(gt) + '</div>'; return;
+      }
       panelYukle();
     });
   }

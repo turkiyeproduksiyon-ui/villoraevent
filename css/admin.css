@@ -143,3 +143,8 @@
 /* Görünmez dosya seçiciler sayfayı yana taşırmasın */
 .gorsel-alan > div, .crud-ust, .pencere-ic, .p-ic { position: relative; }
 html, body.panel { overflow-x: hidden; }
+
+/* Giriş: şifreyi göster */
+.alan > .sifre-satir { display: flex; gap: 8px; align-items: stretch; margin-bottom: 0; font-weight: 400; }
+.sifre-satir input { flex: 1; min-width: 0; }
+.sifre-goster { flex: none; min-width: 76px; padding: 0 12px; border: 1.5px solid var(--line); border-radius: var(--r); background: var(--surface); font-weight: 600; font-size: 14px; }
