@@ -59,7 +59,7 @@
     var ikinci = ozelAcik || videolar.length > 0;
 
     var h = '';
-    h += '<header class="ust"><a class="marka" href="./">' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + '<span>' + esc(M.ad) + '</span></a>' +
+    h += '<header class="ust"><a class="marka" href="./">' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + '<span>' + esc(M.ad) + '</span></a><!--NAV-->' +
       '<button class="menu-dugme" id="menuDugme" aria-label="Menüyü aç">' + ik('menu') + '</button></header>';
     if (ikinci) {
       h += '<div class="sekme" role="tablist"><button role="tab" id="s0" aria-selected="true" data-s="0">Mekan</button>' +
@@ -83,12 +83,17 @@
     }
 
     if (galeri.length && acik('galeri')) {
-      h += '<div class="kisim"><h2>Mekanımız</h2><div class="galeri"><div class="galeri-seri" id="galeriSeri">';
+      h += '<div class="kisim k-galeri"><h2>Mekanımız</h2><div class="galeri"><div class="galeri-seri" id="galeriSeri">';
       galeri.forEach(function (f, i) {
         var u = O.guvenliUrl(f.url); if (!u) return;
         h += '<button type="button" data-foto="' + i + '" aria-label="' + esc(f.baslik || 'Fotoğrafı büyüt') + '"><img loading="lazy" src="' + esc(u) + '" alt="' + esc(f.baslik || M.ad) + '"></button>';
       });
       h += '</div><button class="galeri-ok sol" id="galSol" aria-label="Önceki">' + ik('sol') + '</button><button class="galeri-ok sag" id="galSag" aria-label="Sonraki">' + ik('sag') + '</button></div></div>';
+    }
+
+    if (M.erken_rez_aktif && M.erken_rez_oran > 0) {
+      h += '<div class="erken"><div><b>Erken rezervasyonda %' + esc(M.erken_rez_oran) + ' indirim</b><span>Düğününüze en az ' + esc(M.erken_rez_ay) + ' ay varsa geçerli.</span></div>' +
+        '<button class="btn ana kucuk" data-islem="talep">Talep gir</button></div>';
     }
 
     /* İşlemler */
@@ -101,7 +106,7 @@
     if (acik('ozellikler') && D.ozellik.length) liste.push({ k: 'ozellikler', ad: 'Mekan özellikleri', i: 'yildiz' });
     ISLEMLER = birincil.concat(liste);
 
-    h += '<div class="kisim"><h2>Neye ihtiyacınız var?</h2>';
+    h += '<div class="iki-kol"><div class="kisim k-islem"><h2>Neye ihtiyacınız var?</h2>';
     if (birincil.length) {
       h += '<div class="birincil" style="grid-template-columns:repeat(' + birincil.length + ',1fr)">';
       birincil.forEach(function (x) { h += '<button class="islem' + (x.vurgu ? ' vurgu' : '') + '" data-islem="' + x.k + '">' + ik(x.i, 26) + '<b>' + esc(x.ad) + '</b></button>'; });
@@ -114,30 +119,24 @@
     }
     h += '</div>';
 
-    if (M.erken_rez_aktif && M.erken_rez_oran > 0) {
-      h += '<div class="erken"><div><b>Erken rezervasyonda %' + esc(M.erken_rez_oran) + ' indirim</b><span>Düğününüze en az ' + esc(M.erken_rez_ay) + ' ay varsa geçerli.</span></div>' +
-        '<button class="btn ana kucuk" data-islem="talep">Talep gir</button></div>';
-    }
-
-    h += '<div class="kisim"><h2>Bize ulaşın</h2><div class="iletisim">' +
+    h += '<div class="kisim k-iletisim" id="iletisimK"><h2>Bize ulaşın</h2><div class="iletisim">' +
       (wa ? '<a href="' + esc(wa) + '" target="_blank" rel="noopener">' + ik('whatsapp', 26) + 'WhatsApp</a>' : '') +
       (tel ? '<a href="tel:' + esc(tel) + '">' + ik('telefon', 26) + 'Ara</a>' : '') +
       (harita ? '<a href="' + esc(harita) + '" target="_blank" rel="noopener">' + ik('konum', 26) + 'Konum</a>' : '') +
-      '</div>' + (M.adres ? '<p class="adres">' + esc(M.adres) + '</p>' : '') + '</div>';
+      '</div>' + (M.adres ? '<p class="adres">' + esc(M.adres) + '</p>' : '') + '</div></div>';
 
-    h += '<div class="alt-bilgi"><button type="button" id="kvkkAc">Aydınlatma metni</button><div>Evliliğe Evet ile hazırlandı</div></div>';
     h += '</section>';
 
     /* Bölme 2 */
     if (ikinci) {
       h += '<section class="bolme" id="b1" aria-labelledby="s1">';
       if (ozelAcik) {
-        h += '<div class="kisim"><div class="ozel" id="ozelKutu"><h2>Çiftlerimize özel</h2><p class="not">' + esc(M.ad) + ' ile anlaşan çiftler, size verilen şifreyle buradan fotoğraf ve videolarına ulaşır.</p>' +
+        h += '<div class="kisim k-ozel" id="ozelK"><div class="ozel" id="ozelKutu"><h2>Çiftlerimize özel</h2><p class="not">' + esc(M.ad) + ' ile anlaşan çiftler, size verilen şifreyle buradan fotoğraf ve videolarına ulaşır.</p>' +
           '<form id="ozelForm" novalidate><label class="alan"><span>Şifreniz</span><input id="ozelKod" class="kod" autocomplete="off" autocapitalize="characters" maxlength="12" placeholder="ABCD-1234"></label>' +
           '<div id="ozelHata"></div><button class="btn ana tam" type="submit">' + ik('kilit', 20) + 'Giriş yap</button></form></div></div>';
       }
       if (videolar.length) {
-        h += '<div class="kisim"><h2>Videolar</h2><div class="video-izgara">';
+        h += '<div class="kisim k-video"><h2>Videolar</h2><div class="video-izgara">';
         videolar.forEach(function (v, i) {
           h += '<button type="button" class="video" data-video="' + i + '" aria-label="' + esc((v.baslik || 'Videoyu') + ' oynat') + '"><span class="pl">' + ik('oynat', 26) + '</span><span class="et">' + esc(v.baslik || '') + '</span></button>';
         });
@@ -145,10 +144,17 @@
         if (M.instagram) h += '<p style="margin:14px 4px 0"><a class="btn hafif" target="_blank" rel="noopener" href="' + esc(O.instagramUrl(M.instagram)) + '">' + ik('instagram', 20) + 'Instagram\'da takip et</a></p>';
         h += '</div>';
       }
-      h += '<div class="alt-bilgi">Evliliğe Evet ile hazırlandı</div></section>';
+      h += '</section>';
     }
     h += '</main>';
+    h += '<footer class="alt-bilgi"><button type="button" id="kvkkAc">Aydınlatma metni</button><div>Evliliğe Evet ile hazırlandı</div></footer>';
 
+    var nav = '<nav class="ust-nav" aria-label="Sayfa menüsü">';
+    ISLEMLER.forEach(function (x) { if (x.k !== 'teklif' && x.k !== 'talep') nav += '<button type="button" data-islem="' + x.k + '">' + esc(x.ad) + '</button>'; });
+    nav += '<button type="button" data-ankraj="iletisimK">İletişim</button>';
+    if (ozelAcik) nav += '<button type="button" data-ankraj="ozelK">Çiftlere özel</button>';
+    nav += '</nav>' + (acik('teklif') ? '<button type="button" class="btn ana kucuk ust-cta" data-islem="teklif">Teklif al</button>' : '');
+    h = h.replace('<!--NAV-->', nav);
     $('#uygulama').innerHTML = '<div class="sayfa">' + h + '</div>';
     VIDEOLAR = videolar;
     GALERI = galeri;
@@ -174,6 +180,8 @@
     document.addEventListener('click', function (e) {
       var b = e.target.closest('[data-islem]');
       if (b) { islemCalistir(b.getAttribute('data-islem')); return; }
+      var an = e.target.closest('[data-ankraj]');
+      if (an) { var hd = document.getElementById(an.getAttribute('data-ankraj')); if (hd) { var pn = hd.closest('.bolme'); if (pn && !pn.classList.contains('aktif') && !window.matchMedia('(min-width: 960px)').matches) sekmeAc(+pn.id.slice(1)); hd.scrollIntoView({ behavior: 'smooth', block: 'start' }); } return; }
       var s = e.target.closest('.sekme button');
       if (s) { sekmeAc(+s.getAttribute('data-s')); return; }
       var f = e.target.closest('[data-foto]');

@@ -147,3 +147,70 @@
 .lightbox img { max-width: 96vw; max-height: 86dvh; object-fit: contain; border-radius: 8px; }
 .lightbox .kapat { position: absolute; top: 10px; right: 10px; color: #fff; }
 @media (min-width: 640px) { .sayfa { box-shadow: 0 0 0 1px var(--line); } }
+
+/* ===== Bilgisayar: tam genişlik yerleşim ===== */
+.ust-nav, .ust-cta { display: none; }
+@media (min-width: 960px) {
+  :root { --kap: min(1200px, calc(100% - 80px)); }
+  .sayfa { max-width: none; box-shadow: none; }
+  .ust { height: 76px; padding: 0 max(40px, calc((100% - 1200px) / 2)); gap: 24px; }
+  .ust .marka { font-size: 24px; margin-right: auto; }
+  .ust .marka img { height: 44px; }
+  .ust-nav { display: flex; gap: 2px; }
+  .ust-nav button { min-height: 44px; padding: 0 14px; border: 0; border-radius: 10px; background: transparent; font-weight: 600; color: var(--ink-2); }
+  .ust-nav button:hover { background: var(--bg); color: var(--ink); }
+  .ust-cta { display: inline-flex; }
+  .menu-dugme, .sekme { display: none; }
+  .bolme, .bolme.aktif { display: block; }
+
+  .acilis { min-height: min(84vh, 720px); }
+  .acilis-ic { width: var(--kap); margin: 0 auto; padding: 0 0 150px; }
+  .acilis h1 { font-size: clamp(54px, 5.8vw, 88px); max-width: 13ch; margin-bottom: 18px; }
+  .acilis p { font-size: 21px; max-width: 44ch; margin-bottom: 28px; }
+  .acilis .btn { min-height: 54px; padding: 0 28px; font-size: 17px; }
+
+  .tarih-kart { width: min(1000px, calc(100% - 80px)); margin: -76px auto 0; padding: 30px 36px; display: grid; grid-template-columns: 1fr 1.1fr; column-gap: 40px; align-items: center; }
+  .tarih-kart h2 { grid-column: 1; grid-row: 1; margin: 0; font-size: 26px; align-self: end; }
+  .tarih-kart .alt { grid-column: 1; grid-row: 2; margin: 4px 0 0; align-self: start; }
+  .tarih-kart .tarih-satir { grid-column: 2; grid-row: 1 / 3; }
+  .tarih-kart .tarih-sonuc { grid-column: 1 / -1; grid-row: 3; }
+  .tarih-satir input { min-height: 58px; font-size: 18px; }
+
+  .kisim { width: var(--kap); margin: 0 auto; padding: 80px 0 0; }
+  .kisim > h2 { padding: 0; margin-bottom: 28px; font-size: 36px; }
+
+  .galeri-seri { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 210px; gap: 14px; overflow: visible; padding: 0; scroll-snap-type: none; }
+  .galeri-seri button { flex: none; aspect-ratio: auto; border-radius: var(--r-lg); transition: transform .2s; }
+  .galeri-seri button:hover { transform: scale(1.015); }
+  .galeri-seri button:first-child { grid-column: span 2; grid-row: span 2; }
+  .galeri-seri button:first-child:last-child { grid-column: 1 / -1; grid-row: span 2; }
+  .galeri-ok, .galeri-ok.sol, .galeri-ok.sag { display: none; }
+
+  .erken { width: var(--kap); margin: 56px auto 0; padding: 26px 36px; }
+  .erken b { font-size: 24px; }
+  .erken span { font-size: 16px; }
+
+  .iki-kol { width: var(--kap); margin: 0 auto; display: grid; grid-template-columns: 1.7fr 1fr; gap: 64px; align-items: start; }
+  .iki-kol > .kisim { width: auto; margin: 0; }
+  .birincil .islem { min-height: 170px; padding: 24px; }
+  .birincil .islem b { font-size: 18px; }
+  .liste button { min-height: 68px; font-size: 17px; }
+  .liste button:hover, .islem:hover { filter: brightness(.985); }
+  .iletisim { grid-template-columns: 1fr; gap: 10px; }
+  .iletisim a { flex-direction: row; justify-content: flex-start; gap: 16px; padding: 20px 22px; font-size: 17px; }
+
+  .video-izgara { grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .k-ozel .ozel { max-width: 640px; padding: 36px; }
+  .alt-bilgi { padding: 88px 20px 56px; }
+  .cerez { max-width: 760px; }
+}
+@media (min-width: 1500px) {
+  .galeri-seri { grid-auto-rows: 240px; }
+}
+@media (min-width: 960px) {
+  .k-ozel .ozel { max-width: none; display: grid; grid-template-columns: 1fr 1fr; column-gap: 48px; align-items: center; padding: 40px 48px; }
+  .k-ozel .ozel h2 { grid-column: 1; grid-row: 1; margin: 0 0 8px; font-size: 32px; align-self: end; }
+  .k-ozel .ozel > .not { grid-column: 1; grid-row: 2; margin: 0; font-size: 17px; align-self: start; }
+  .k-ozel .ozel form { grid-column: 2; grid-row: 1 / 3; }
+  .k-ozel .hosgeldin { grid-column: 1 / -1; }
+}
