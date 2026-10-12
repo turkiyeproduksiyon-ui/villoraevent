@@ -687,8 +687,11 @@
     function ta(n, e, o) { return '<label class="alan"><span>' + e + '</span><input name="' + n + '" value="' + esc(M[n] || '') + '"' + (o && o.p ? ' placeholder="' + esc(o.p) + '"' : '') + '></label>'; }
     var h = '<form id="af" novalidate><h2 class="alt-baslik">Mekan bilgileri</h2><div class="ikili">' + ta('ad', 'Mekan adı') + ta('yetkili_ad', 'Yetkili adı') + '</div>' +
       '<div class="ikili">' + ta('telefon', 'Telefon', { p: '0532 123 45 67' }) + ta('whatsapp', 'WhatsApp numarası', { p: 'Telefonla aynıysa boş bırakın' }) + '</div>' +
-      '<div class="ikili">' + ta('eposta', 'E-posta') + ta('instagram', 'Instagram', { p: '@kullaniciadi' }) + '</div>' +
+      ta('eposta', 'E-posta') +
       '<div class="ikili">' + ta('web', 'Web sitesi') + ta('harita_url', 'Harita bağlantısı', { p: 'Google Haritalar paylaşım bağlantısı' }) + '</div>' + ta('adres', 'Adres') +
+      '<h2 class="alt-baslik">Sosyal medya</h2><p class="not" style="margin-top:-8px">Kullanıcı adı ya da tam bağlantı yazabilirsiniz. Boş bıraktığınız simge sitede görünmez.</p>' +
+      '<div class="ikili">' + ta('instagram', 'Instagram', { p: '@kullaniciadi' }) + ta('facebook', 'Facebook', { p: 'sayfa adı ya da bağlantı' }) + '</div>' +
+      '<div class="ikili">' + ta('youtube', 'YouTube', { p: '@kanaladi ya da bağlantı' }) + ta('tiktok', 'TikTok', { p: '@kullaniciadi' }) + '</div>' +
       '<h2 class="alt-baslik">Açılış sayfası</h2>' + ta('ana_baslik', 'Ana başlık', { p: 'Boş bırakırsanız mekan adı yazar' }) + '<label class="alan"><span>Ana yazı</span><textarea name="ana_yazi" rows="2">' + esc(M.ana_yazi || '') + '</textarea></label>' +
       gorselAlan('hero_url', 'Açılış görseli', M.hero_url, 'Yatay, geniş bir fotoğraf iyi görünür.') + gorselAlan('logo_url', 'Logo', M.logo_url, 'Saydam arka planlı PNG önerilir.') +
       '<label class="alan"><span>Site rengi</span><input name="ana_renk" type="color" value="' + esc(/^#[0-9a-f]{6}$/i.test(M.ana_renk || '') ? M.ana_renk : '#7a1f3d') + '" style="min-height:52px;padding:4px"></label>' +
@@ -712,7 +715,7 @@
     var v = function (n) { return f.elements[n].value.trim(); }, b = {};
     BOLUMLER.forEach(function (x) { b[x[0]] = f.elements['b_' + x[0]].checked; });
     if (!v('ad')) { $('#afh').innerHTML = '<div class="hata-kutu">Mekan adı boş olamaz.</div>'; return; }
-    var o = { ad: v('ad'), yetkili_ad: v('yetkili_ad') || null, telefon: v('telefon') || null, whatsapp: v('whatsapp') || null, eposta: v('eposta') || null, instagram: v('instagram') || null,
+    var o = { ad: v('ad'), yetkili_ad: v('yetkili_ad') || null, telefon: v('telefon') || null, whatsapp: v('whatsapp') || null, eposta: v('eposta') || null, instagram: v('instagram') || null, facebook: v('facebook') || null, youtube: v('youtube') || null, tiktok: v('tiktok') || null,
       web: O.guvenliUrl(v('web')) || null, harita_url: O.guvenliUrl(v('harita_url')) || null, adres: v('adres') || null, ana_baslik: v('ana_baslik') || null, ana_yazi: v('ana_yazi') || null,
       hero_url: v('hero_url') || null, logo_url: v('logo_url') || null, ana_renk: v('ana_renk'), erken_rez_aktif: f.elements.erken_rez_aktif.checked,
       erken_rez_oran: Math.min(100, Math.max(0, sayi(v('erken_rez_oran')) || 0)), erken_rez_ay: Math.max(0, sayi(v('erken_rez_ay')) || 0), bolumler: b, kvkk_metni: v('kvkk_metni') || null };

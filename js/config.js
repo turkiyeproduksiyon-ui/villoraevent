@@ -6,5 +6,6 @@ window.AYAR = {
   KONUM: { lat: '39.68602752685547', lng: '32.740657806396484' },   // harita bağlantısında koordinat yoksa bu kullanılır
   HERO: 'img/hero.jpg',   // ana banner (panelden yeni hero yüklenirse o geçerli olur)
   GALERI: ['img/galeri-1.jpg', 'img/galeri-2.jpg', 'img/galeri-3.jpg', 'img/galeri-4.jpg', 'img/galeri-5.jpg'],   // GEÇİCİ: panele mekan fotoğrafı yüklenince otomatik kalkar
+  SOSYAL: { facebook: '', youtube: '', tiktok: '' },   // varsayılan bağlantılar (panelden girilen önceliklidir)
   LOGO: 'img/logo-isaret.png'   // panelden logo yüklenmediyse bu kullanılır
 };

@@ -172,9 +172,14 @@
     }
     h += '</main>';
     var fl = '';
-    var igUrl = M.instagram ? O.instagramUrl(M.instagram) : '';
+    var igUrl = O.sosyalUrl('instagram', M.instagram);
+    var AY = window.AYAR || {}, SY = AY.SOSYAL || {};
+    var fbUrl = O.sosyalUrl('facebook', M.facebook || SY.facebook), ytUrl = O.sosyalUrl('youtube', M.youtube || SY.youtube), ttUrl = O.sosyalUrl('tiktok', M.tiktok || SY.tiktok);
     var webUrl = O.guvenliUrl(M.web);
     if (igUrl) fl += '<a href="' + esc(igUrl) + '" target="_blank" rel="noopener" aria-label="Instagram">' + ik('instagram', 22) + '</a>';
+    if (fbUrl) fl += '<a href="' + esc(fbUrl) + '" target="_blank" rel="noopener" aria-label="Facebook">' + ik('facebook', 22) + '</a>';
+    if (ytUrl) fl += '<a href="' + esc(ytUrl) + '" target="_blank" rel="noopener" aria-label="YouTube">' + ik('youtube', 22) + '</a>';
+    if (ttUrl) fl += '<a href="' + esc(ttUrl) + '" target="_blank" rel="noopener" aria-label="TikTok">' + ik('tiktok', 22) + '</a>';
     if (wa) fl += '<a href="' + esc(wa) + '" target="_blank" rel="noopener" aria-label="WhatsApp">' + ik('whatsapp', 22) + '</a>';
     if (tel) fl += '<a href="tel:' + esc(tel) + '" aria-label="Ara">' + ik('telefon', 22) + '</a>';
     if (M.eposta) fl += '<a href="mailto:' + esc(M.eposta) + '" aria-label="E-posta">' + ik('eposta', 22) + '</a>';

@@ -33,6 +33,15 @@
     if (/^(www\.|[a-z0-9-]+\.[a-z]{2,})(\/|$)/i.test(u)) return 'https://' + u;
     return '';
   }
+  /* Sosyal medya: "@kullanici", "kullanici" ya da tam bağlantı yazılabilir */
+  var SOSYAL_TABAN = { instagram: 'https://www.instagram.com/', facebook: 'https://www.facebook.com/', youtube: 'https://www.youtube.com/@', tiktok: 'https://www.tiktok.com/@' };
+  function sosyalUrl(platform, u) {
+    u = String(u || '').trim();
+    if (!u) return '';
+    if (u.charAt(0) === '@') u = u.slice(1);
+    if (/^[A-Za-z0-9._-]{1,60}$/.test(u)) return SOSYAL_TABAN[platform] + u + (platform === 'instagram' ? '/' : '');
+    return guvenliUrl(u);
+  }
   function instagramUrl(u) {
     u = String(u || '').trim();
     if (!u) return '';
@@ -69,6 +78,9 @@
     kalem: '<path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/>',
     tabak: '<path d="M7 3v8M5 3v5a2 2 0 004 0V3M7 11v10M17 3c-2 2-3 4-3 7h3v11"/>',
     yildiz: '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/>',
+    facebook: '<path d="M14 8h3V4h-3a4 4 0 00-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8.500A.5.5 0 0114 8z"/>',
+    youtube: '<rect x="2.500" y="5.500" width="19" height="13" rx="4"/><path d="M10 9.500v5l4.500-2.500z"/>',
+    tiktok: '<path d="M14 3v11.500a3.500 3.500 0 11-3.500-3.500"/><path d="M14 3c.3 2.500 2 4.300 4.500 4.500"/>',
     eposta: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
     galeri: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M3 17l5-4 4 3 3-2 6 4"/>',
     muzik: '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>',
@@ -135,7 +147,7 @@
 
   window.ORTAK = {
     esc: esc, para: para, tarihTR: tarihTR, tarihNesne: tarihNesne, bugunISO: bugunISO, isoYap: isoYap, AYLAR: AYLAR,
-    guvenliUrl: guvenliUrl, instagramUrl: instagramUrl, waNumara: waNumara, waLink: waLink,
+    guvenliUrl: guvenliUrl, instagramUrl: instagramUrl, sosyalUrl: sosyalUrl, waNumara: waNumara, waLink: waLink,
     renkUygula: renkUygula, ikon: ikon, bildir: bildir, hataMetni: hataMetni
   };
 })();
