@@ -32,6 +32,8 @@
     if (r.error) throw r.error;
     if (!r.data) throw new Error('mekan_yok');
     M = r.data;
+    var VK = (A.VARSAYILAN || {});   // panelde boş bırakılan alanlar config.js'teki değerle dolar
+    Object.keys(VK).forEach(function (k) { if (!M[k]) M[k] = VK[k]; });
     function s(t) { return sb.from(t).select('*').eq('mekan_id', M.id).order('sira', { ascending: true }); }
     var x = await Promise.all([s('salonlar'), s('mekan_fotograflari'), s('mekan_videolari'), s('fiyat_kategorileri'),
       s('fiyat_kalemleri'), s('menuler'), s('ozellikler'), s('anlasmali_firmalar')]);

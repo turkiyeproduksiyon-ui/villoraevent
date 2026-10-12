@@ -7,5 +7,6 @@ window.AYAR = {
   HERO: 'img/hero.jpg',   // ana banner (panelden yeni hero yüklenirse o geçerli olur)
   GALERI: ['img/galeri-1.jpg', 'img/galeri-2.jpg', 'img/galeri-3.jpg', 'img/galeri-4.jpg', 'img/galeri-5.jpg'],   // GEÇİCİ: panele mekan fotoğrafı yüklenince otomatik kalkar
   SOSYAL: { facebook: '', youtube: '', tiktok: '' },   // varsayılan bağlantılar (panelden girilen önceliklidir)
+  VARSAYILAN: { telefon: '0542 722 03 06', instagram: '@villoraevent', adres: 'Yavrucuk Mahallesi, Haymana Yolu Bulvarı, Hayman Küme Evleri No:81, Yavrucuk Gölbaşı / Ankara' },   // kartvizitten; panelde doldurulunca panel geçerli olur
   LOGO: 'img/logo-isaret.png'   // panelden logo yüklenmediyse bu kullanılır
 };
