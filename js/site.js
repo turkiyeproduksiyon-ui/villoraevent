@@ -196,7 +196,7 @@
     if (M.eposta) fl += '<a href="mailto:' + esc(M.eposta) + '" aria-label="E-posta">' + ik('eposta', 22) + '</a>';
     if (harita) fl += '<a href="' + esc(harita) + '" target="_blank" rel="noopener" aria-label="Konum">' + ik('konum', 22) + '</a>';
     if (webUrl) fl += '<a href="' + esc(webUrl) + '" target="_blank" rel="noopener" aria-label="Web sitesi">' + ik('web', 22) + '</a>';
-    if (videolar.length) h += '<button type="button" class="shorts-serit" id="shortsAc" aria-label="' + esc(M.ad) + ' Shorts videolarını aç"><span class="el" aria-hidden="true">👇</span><b>Shorts</b></button>';
+    if (videolar.length) h += '<button type="button" class="shorts-serit" id="shortsAc" aria-label="' + esc(M.ad) + ' Shorts videolarını aç"><span class="el" aria-hidden="true">👇</span><b>Shorts</b><span class="shorts-peekwrap" aria-hidden="true"><span class="shorts-peek">' + (videolar[0] && ytKapak(videolar[0].url) ? '<img src="' + esc(ytKapak(videolar[0].url)) + '" alt="">' : '') + '</span></span></button>';
     h += '<footer class="alt-bilgi"><div class="alt-ic">' +
       '<div class="alt-marka">' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + '<b>' + esc(M.ad) + '</b></div>' +
       (AY0.ETIKET ? '<p class="alt-etiket">' + esc(AY0.ETIKET) + '</p>' : '') +
