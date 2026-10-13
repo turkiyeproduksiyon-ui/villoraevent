@@ -81,7 +81,7 @@
         '<button type="button" class="shorts-action-btn b-kalp' + (begeni[v.id] ? ' liked' : '') + '" aria-label="Beğen">' + IC.kalp + '<span>Beğen</span></button>' +
         '<button type="button" class="shorts-action-btn b-kaydet' + (kayit[v.id] ? ' saved' : '') + '" aria-label="Kaydet">' + IC.kaydet + '<span>Kaydet</span></button>' +
         '<button type="button" class="shorts-action-btn b-paylas" aria-label="Paylaş">' + IC.paylas + '<span>Paylaş</span></button>' +
-        '<button type="button" class="shorts-action-btn b-yukari" aria-label="Sayfanın başına dön">' + IC.yukari + '<span>Yukarı</span></button></div>' +
+        '</div>' +
         '<div class="shorts-info"><span class="shorts-info-icon">' + IC.oynat + '</span><p>' + esc(v.baslik || ad + ' Shorts') + '</p></div></div>';
     }).join('');
     feed.addEventListener('click', function (e) {
@@ -95,7 +95,6 @@
         else if (navigator.clipboard) { navigator.clipboard.writeText(url).then(function () { alert('Bağlantı kopyalandı'); }).catch(function () { /* yok */ }); }
         return;
       }
-      if (e.target.closest('.b-yukari')) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
       if (e.target.closest('.shorts-tap-layer')) {
         sesAcik = !sesAcik;
         Object.keys(players).forEach(function (k) { try { sesAcik ? players[k].unMute() : players[k].mute(); } catch (x) { /* yok */ } });
@@ -106,22 +105,31 @@
     if (ytHazir) oynaticilariKur(); else ytApiYukle();
   }
 
+  var acikMi = false, cizildi = false, kapatBtn = null, overlay = null;
+  function ac() {
+    if (acikMi) return; acikMi = true;
+    overlay.classList.add('open'); document.body.style.overflow = 'hidden';
+    try { if (location.hash !== '#shorts') history.pushState(null, '', '#shorts'); } catch (e) { /* yok */ }
+    if (!cizildi) { cizildi = true; akisCiz(); }
+    else { Object.keys(players).forEach(function (k) { if (visible[k]) { try { players[k].playVideo(); } catch (x) { /* yok */ } } }); }
+  }
+  function kapat(geri) {
+    if (!acikMi) return; acikMi = false;
+    overlay.classList.remove('open'); document.body.style.overflow = '';
+    Object.keys(players).forEach(function (k) { try { players[k].pauseVideo(); } catch (x) { /* yok */ } });
+    if (geri && location.hash === '#shorts') { try { history.back(); } catch (e) { /* yok */ } }
+  }
   window.VSHORTS = {
-    /* liste: [{id, url, baslik}]  ·  kok: #shortsInline  ·  mekanAd: başlıkta görünür */
-    kur: function (liste, kok, mekanAd) {
-      ad = mekanAd || '';
+    /* liste: [{id, url, baslik}] · dugme: alt bilgideki yarım daire · kaplama: tam ekran akış · mekanAd */
+    kur: function (liste, dugme, kaplama, mekanAd) {
+      ad = mekanAd || ''; overlay = kaplama;
       L = liste.map(function (v) { return { id: v.id, url: v.url, baslik: v.baslik, yt: ytId(v.url) }; }).filter(function (v) { return v.url; });
-      if (!kok) return;
-      if (!L.length) { kok.style.display = 'none'; return; }
-      feed = kok.querySelector('#shortsFeed');
-      var ilk = L.filter(function (v) { return v.yt; })[0], im = kok.querySelector('#shortsPeekImg');
-      if (im && ilk) { im.onerror = function () { im.style.display = 'none'; }; im.src = 'https://i.ytimg.com/vi/' + ilk.yt + '/hqdefault.jpg'; }
-      else if (im) { im.parentNode.style.display = 'none'; }
-      var cizildi = false;
-      izle = new IntersectionObserver(function (es) {
-        es.forEach(function (en) { if (en.isIntersecting && !cizildi) { cizildi = true; akisCiz(); izle.disconnect(); } });
-      }, { rootMargin: '1800px 0px' });
-      izle.observe(kok);
+      if (!dugme || !kaplama || !L.length) { if (dugme) dugme.style.display = 'none'; return; }
+      feed = kaplama.querySelector('#shortsFeed'); kapatBtn = kaplama.querySelector('#shortsKapat');
+      dugme.addEventListener('click', ac);
+      kapatBtn.addEventListener('click', function () { kapat(true); });
+      window.addEventListener('popstate', function () { if (location.hash !== '#shorts') kapat(false); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') kapat(true); });
     }
   };
 })();
