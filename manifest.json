@@ -1,0 +1,17 @@
+{
+  "name": "Villora Event",
+  "short_name": "Villora",
+  "description": "Villora Event: düğün tarihinizi sorgulayın, fiyatları görün, teklif alın.",
+  "lang": "tr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#17181c",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "img/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

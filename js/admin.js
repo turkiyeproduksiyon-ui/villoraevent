@@ -36,6 +36,46 @@
   function aktifSayfa() { return document.getElementById('icerik'); }
   function uuid() { return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2, 10)); }
 
+  /* ---------- Sürükle-bırak sıralama (fare ve parmak): tutamaçtan tutup bırak ---------- */
+  function siralanabilir(kap, ogeSecici, bitti) {
+    var sur = null;
+    function ogeler() { return [].slice.call(kap.querySelectorAll(ogeSecici)); }
+    kap.addEventListener('pointerdown', function (e) {
+      var h = e.target.closest('.tutamac'); if (!h || !kap.contains(h)) return;
+      var it = h.closest(ogeSecici); if (!it) return;
+      e.preventDefault();
+      sur = { it: it, h: h, once: ogeler().map(function (x) { return x.getAttribute('data-id'); }).join(',') };
+      it.classList.add('suruklenen');
+      try { h.setPointerCapture(e.pointerId); } catch (x) { /* yok */ }
+    });
+    kap.addEventListener('pointermove', function (e) {
+      if (!sur) return;
+      if (e.clientY < 70) window.scrollBy(0, -14); else if (e.clientY > window.innerHeight - 70) window.scrollBy(0, 14);
+      var hedef = null, liste = ogeler();
+      for (var i = 0; i < liste.length; i++) {
+        if (liste[i] === sur.it) continue;
+        var r = liste[i].getBoundingClientRect();
+        if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) { hedef = liste[i]; break; }
+      }
+      if (!hedef) return;
+      if (liste.indexOf(sur.it) < liste.indexOf(hedef)) hedef.parentNode.insertBefore(sur.it, hedef.nextSibling); else hedef.parentNode.insertBefore(sur.it, hedef);
+    });
+    function birak() {
+      if (!sur) return;
+      var s0 = sur; sur = null; s0.it.classList.remove('suruklenen');
+      var ids = ogeler().map(function (x) { return x.getAttribute('data-id'); });
+      if (ids.join(',') !== s0.once) bitti(ids);
+    }
+    kap.addEventListener('pointerup', birak);
+    kap.addEventListener('pointercancel', birak);
+  }
+  async function siraKaydet(tablo, ids) {
+    try { await Promise.all(ids.map(function (id, i) { return guncelle(tablo, id, { sira: i + 1 }); })); O.bildir('Sıra kaydedildi', 'ok'); }
+    catch (er) { hata(er); }
+  }
+  function sonSira(satirlar) { return (satirlar || []).reduce(function (m, r) { return Math.max(m, Number(r.sira) || 0); }, 0) + 1; }
+  var TUTAMAC = '<button type="button" class="tutamac" aria-label="Sürükleyerek sırala" title="Tutup sürükleyin">⋮⋮</button>';
+
   /* ---------- Pencere ---------- */
   var pencereler = [];
   function pencere(baslik, govde, ops) {
@@ -124,10 +164,10 @@
     GIZLI = g.data || null;
     O.renkUygula(M.ana_renk);
     var x = await Promise.all([
-      q(sb.from('salonlar').select('*').eq('mekan_id', id).order('sira')),
-      q(sb.from('fiyat_kategorileri').select('*').eq('mekan_id', id).order('sira')),
-      q(sb.from('fiyat_kalemleri').select('*').eq('mekan_id', id).order('sira')),
-      q(sb.from('menuler').select('*').eq('mekan_id', id).order('sira'))
+      q(sb.from('salonlar').select('*').eq('mekan_id', id).order('sira').order('id')),
+      q(sb.from('fiyat_kategorileri').select('*').eq('mekan_id', id).order('sira').order('id')),
+      q(sb.from('fiyat_kalemleri').select('*').eq('mekan_id', id).order('sira').order('id')),
+      q(sb.from('menuler').select('*').eq('mekan_id', id).order('sira').order('id'))
     ]);
     D.salon = x[0]; D.kat = x[1]; D.kalem = x[2]; D.menu = x[3];
     await kayitlariYukle();
@@ -275,7 +315,18 @@
         '<div class="ikili"><label class="alan"><span>Düğün tarihi</span><input name="tarih" type="date" value="' + esc(c.dugun_tarihi || '') + '"></label><label class="alan"><span>Kişi sayısı</span><input name="kisi" type="number" min="1" value="' + esc(c.kisi_sayisi || '') + '"></label></div>' +
         '<label class="alan"><span>Anlaşılan tutar <em>(boş bırakırsanız teklif toplamı kullanılır)</em></span><input name="tutar" type="number" step="0.01" min="0" value="' + esc(c.anlasma_tutari == null ? '' : c.anlasma_tutari) + '"></label>' +
         '<label class="alan"><span>İç not <em>(çift görmez)</em></span><textarea name="not">' + esc(c.ic_not || '') + '</textarea></label>' +
-        '<div id="bfh"></div><button class="btn ana" type="submit">Bilgileri kaydet</button></form>', true);
+        '<div id="bfh"></div><div class="satir-arac"><button class="btn ana" type="submit">Bilgileri kaydet</button>' + (c.durum === 'iptal' ? '<button class="btn tehlike" type="button" id="kayitSil">Kaydı sil</button>' : '') + '</div></form>' +
+        (c.durum === 'iptal' ? '<p class="not">İptal edilen kayıtlar silinebilir. Silinen kayıt, teklif ve ödemeleriyle birlikte geri getirilemez.</p>' : ''), true);
+      var ks = $('#kayitSil', ic);
+      if (ks) ks.addEventListener('click', async function () {
+        if (!onay('Bu kayıt, teklif ve ödemeleriyle birlikte kalıcı olarak silinsin mi? Bu işlem geri alınamaz.')) return;
+        try {
+          var rs = await sb.from('cift_kayitlari').delete().eq('id', c.id).select();
+          if (rs.error) throw rs.error;
+          if (!rs.data || !rs.data.length) throw new Error('Silme izni yok. Supabase\'de supabase-paket1.sql dosyasını çalıştırın.');
+          p.kapat(); O.bildir('Kayıt silindi', 'ok');
+        } catch (er) { $('#bfh', ic).innerHTML = '<div class="hata-kutu">' + esc(O.hataMetni(er)) + '</div>'; }
+      });
       $('#bf', ic).addEventListener('submit', async function (e) {
         e.preventDefault();
         var f = e.target, v = function (n) { return f.elements[n].value.trim(); };
@@ -526,7 +577,7 @@
 
   /* ================= İÇERİK ================= */
   var icerikAlt = 'fiyat';
-  var ALTLAR = [['fiyat', 'Fiyatlar'], ['menu', 'Menüler'], ['foto', 'Fotoğraflar'], ['video', 'Videolar'], ['firma', 'Anlaşmalı firmalar'], ['ozellik', 'Mekan özellikleri'], ['salon', 'Salonlar']];
+  var ALTLAR = [['fiyat', 'Fiyatlar'], ['menu', 'Menüler'], ['foto', 'Fotoğraflar'], ['video', 'Videolar'], ['makyaj', 'Make-up'], ['firma', 'Anlaşmalı firmalar'], ['ozellik', 'Mekan özellikleri'], ['salon', 'Salonlar']];
   function icerikCiz() {
     aktifSayfa().innerHTML = '<div class="alt-sekme" role="tablist">' + ALTLAR.map(function (a) { return '<button role="tab" data-a="' + a[0] + '" aria-selected="' + (a[0] === icerikAlt) + '">' + a[1] + '</button>'; }).join('') + '</div><div id="altIc"></div>';
     $('.alt-sekme').addEventListener('click', function (e) {
@@ -540,14 +591,15 @@
   function altCiz() {
     var kap = $('#altIc');
     if (icerikAlt === 'fiyat') { kap.innerHTML = '<div id="kk"></div><div id="kl" style="margin-top:28px"></div>'; crud($('#kk'), CFG.kat); crud($('#kl'), CFG.kalem); }
-    else if (icerikAlt === 'foto') fotoCiz(kap);
+    else if (icerikAlt === 'foto') fotoCiz(kap, 'galeri');
+    else if (icerikAlt === 'makyaj') makyajCiz(kap);
     else crud(kap, CFG[icerikAlt]);
   }
   async function yerelTazele() {
-    D.salon = await q(sb.from('salonlar').select('*').eq('mekan_id', M.id).order('sira'));
-    D.kat = await q(sb.from('fiyat_kategorileri').select('*').eq('mekan_id', M.id).order('sira'));
-    D.kalem = await q(sb.from('fiyat_kalemleri').select('*').eq('mekan_id', M.id).order('sira'));
-    D.menu = await q(sb.from('menuler').select('*').eq('mekan_id', M.id).order('sira'));
+    D.salon = await q(sb.from('salonlar').select('*').eq('mekan_id', M.id).order('sira').order('id'));
+    D.kat = await q(sb.from('fiyat_kategorileri').select('*').eq('mekan_id', M.id).order('sira').order('id'));
+    D.kalem = await q(sb.from('fiyat_kalemleri').select('*').eq('mekan_id', M.id).order('sira').order('id'));
+    D.menu = await q(sb.from('menuler').select('*').eq('mekan_id', M.id).order('sira').order('id'));
   }
 
   var SIRA = { k: 'sira', e: 'Sıra', t: 'number', v: 0, yardim: 'Küçük sayı önce görünür.' };
@@ -564,23 +616,35 @@
     firma: { tablo: 'anlasmali_firmalar', baslik: 'Anlaşmalı firmalar', tek: 'firma', aciklama: 'Çiftlere indirim sunan çiçekçi, fotoğrafçı, gelinlikçi vb. firmalar. Sitede kart olarak görünür; kaç kişinin tıkladığını burada izlersiniz.',
       alanlar: [{ k: 'ad', e: 'Firma adı', t: 'text', zor: true }, { k: 'kategori', e: 'Kategori', t: 'text', ornek: 'Çiçekçi' }, { k: 'aciklama', e: 'Kısa açıklama', t: 'textarea' }, { k: 'indirim_oran', e: 'İndirim oranı (%)', t: 'number', max: 100 }, { k: 'instagram', e: 'Instagram', t: 'text', ornek: '@kullaniciadi' }, { k: 'web', e: 'Web sitesi', t: 'url' }, { k: 'telefon', e: 'Telefon', t: 'text' }, SIRA, AKTIF],
       satir: function (r) { return [r.ad, [r.kategori, r.indirim_oran ? '%' + r.indirim_oran + ' indirim' : '', r.yonlendirme_sayisi ? r.yonlendirme_sayisi + ' tıklama' : ''].filter(Boolean).join(' · ')]; } },
-    video: { tablo: 'mekan_videolari', baslik: 'Videolar', tek: 'video', aciklama: 'Instagram Reels ya da YouTube Shorts bağlantısı yapıştırın. Sitenin ikinci bölümünde görünür.',
-      alanlar: [{ k: 'url', e: 'Video bağlantısı', t: 'url', zor: true, ornek: 'https://www.instagram.com/reel/...' }, { k: 'platform', e: 'Platform', t: 'select', v: 'instagram', opt: [['instagram', 'Instagram'], ['youtube', 'YouTube']] }, { k: 'baslik', e: 'Başlık', t: 'text' }, { k: 'bolum', e: 'Bölüm', t: 'select', v: 'shorts', opt: [['shorts', 'Kısa videolar'], ['klip', 'Kliplerimiz']] }, SIRA, AKTIF],
-      satir: function (r) { return [r.baslik || r.url, r.platform === 'youtube' ? 'YouTube' : 'Instagram']; } }
+    video: { tablo: 'mekan_videolari', baslik: 'Videolar', tek: 'video', aciklama: 'YouTube bağlantısı yapıştırın (önerilir, tam ekran oynar). "Shorts" dikey kısa videolar içindir, "Kliplerimiz" uzun klipler içindir. Instagram bağlantısı koyarsanız ziyaretçi Instagram\'a yönlendirilir.',
+      alanlar: [{ k: 'url', e: 'Video bağlantısı', t: 'url', zor: true, ornek: 'https://www.youtube.com/shorts/...' }, { k: 'baslik', e: 'Başlık', t: 'text' }, { k: 'bolum', e: 'Sitede nerede görünsün?', t: 'select', v: 'shorts', opt: [['shorts', 'Shorts (dikey kısa videolar)'], ['klip', 'Kliplerimiz']] }, SIRA, AKTIF],
+      filtre: function (r) { return r.bolum !== 'makyaj'; },
+      satir: function (r) { return [r.baslik || r.url, (r.bolum === 'klip' ? 'Kliplerimiz' : 'Shorts') + ' · ' + (/youtu/i.test(r.url) ? 'YouTube' : 'Instagram')]; } },
+    makyaj_video: { tablo: 'mekan_videolari', baslik: 'Make-up videoları', tek: 'video', aciklama: 'YouTube bağlantısı yapıştırın. Make-up penceresinde görünür.',
+      alanlar: [{ k: 'url', e: 'Video bağlantısı', t: 'url', zor: true, ornek: 'https://www.youtube.com/shorts/...' }, { k: 'baslik', e: 'Başlık', t: 'text' }, SIRA, AKTIF],
+      filtre: function (r) { return r.bolum === 'makyaj'; }, varsayilan: { bolum: 'makyaj' },
+      satir: function (r) { return [r.baslik || r.url, /youtu/i.test(r.url) ? 'YouTube' : 'Instagram']; } },
+    makyaj_hiz: { tablo: 'makyaj_hizmetleri', baslik: 'Yapılan işlemler', tek: 'işlem', aciklama: 'Make-up penceresinde alt alta görünen işlemler. Her işlem için başlık ve açıklama yazın; fiyat isteğe bağlıdır.',
+      alanlar: [{ k: 'baslik', e: 'İşlem adı', t: 'text', zor: true, ornek: 'Gelin makyajı' }, { k: 'aciklama', e: 'Açıklama (paragraf)', t: 'textarea', satir: 6 }, { k: 'fiyat', e: 'Fiyat (TL)', t: 'money', yardim: 'Boş bırakırsanız fiyat gösterilmez.' }, SIRA, AKTIF],
+      satir: function (r) { return [r.baslik, r.fiyat == null ? '' : O.para(r.fiyat)]; } }
   };
 
   async function crud(kap, cfg) {
     var alanlar = typeof cfg.alanlar === 'function' ? cfg.alanlar() : cfg.alanlar;
-    var satirlar = await q(sb.from(cfg.tablo).select('*').eq('mekan_id', M.id).order('sira'));
+    var tum = await q(sb.from(cfg.tablo).select('*').eq('mekan_id', M.id).order('sira').order('id'));
+    var satirlar = cfg.filtre ? tum.filter(cfg.filtre) : tum;
     var h = '<div class="crud-ust"><div><h2>' + esc(cfg.baslik) + '</h2>' + (cfg.aciklama ? '<p class="not" style="margin:4px 0 0">' + esc(cfg.aciklama) + '</p>' : '') + '</div><button class="btn ana" type="button" data-yeni>Ekle</button></div>';
-    h += satirlar.length ? '<ul class="crud-liste">' + satirlar.map(function (r) {
+    h += satirlar.length ? '<p class="not suru-not">Sırayı değiştirmek için soldaki ⋮⋮ simgesinden tutup sürükleyin.</p><ul class="crud-liste">' + satirlar.map(function (r) {
       var s = cfg.satir(r);
-      return '<li><button type="button" class="crud-satir" data-id="' + esc(r.id) + '"><span class="c-ad">' + esc(s[0]) + '</span><span class="c-alt">' + esc(s[1] || '') + '</span></button>' +
+      return '<li data-id="' + esc(r.id) + '">' + TUTAMAC + '<button type="button" class="crud-satir" data-id="' + esc(r.id) + '"><span class="c-ad">' + esc(s[0]) + '</span><span class="c-alt">' + esc(s[1] || '') + '</span></button>' +
         (r.aktif === false ? '<span class="rozet d-iptal">Gizli</span>' : '') + '</li>';
     }).join('') + '</ul>' : '<div class="bos">Henüz ' + esc(cfg.tek) + ' eklenmedi.</div>';
     kap.innerHTML = h;
-    $('[data-yeni]', kap).addEventListener('click', function () { crudForm(kap, cfg, null); });
-    $$('.crud-satir', kap).forEach(function (b) { b.addEventListener('click', function () { crudForm(kap, cfg, satirlar.filter(function (r) { return r.id === b.getAttribute('data-id'); })[0]); }); });
+    var yeniSira = sonSira(tum);
+    $('[data-yeni]', kap).addEventListener('click', function () { crudForm(kap, cfg, null, yeniSira); });
+    $$('.crud-satir', kap).forEach(function (b) { b.addEventListener('click', function () { crudForm(kap, cfg, satirlar.filter(function (r) { return r.id === b.getAttribute('data-id'); })[0], yeniSira); }); });
+    var ul = $('.crud-liste', kap);
+    if (ul) siralanabilir(ul, 'li', function (ids) { siraKaydet(cfg.tablo, ids); });
   }
 
   function alanHtml(a, deger) {
@@ -588,14 +652,14 @@
     var ek = a.yardim ? '<small class="yardim">' + esc(a.yardim) + '</small>' : '';
     if (a.t === 'bool') return '<label class="onay"><input type="checkbox" name="' + a.k + '"' + (v ? ' checked' : '') + '><span>' + esc(a.e) + '</span></label>';
     var etiket = '<span>' + esc(a.e) + (a.zor ? '' : ' <em>(isteğe bağlı)</em>') + '</span>';
-    if (a.t === 'textarea') return '<label class="alan">' + etiket + '<textarea name="' + a.k + '" rows="3">' + esc(v) + '</textarea>' + ek + '</label>';
+    if (a.t === 'textarea') return '<label class="alan">' + etiket + '<textarea name="' + a.k + '" rows="' + (a.satir || 3) + '">' + esc(v) + '</textarea>' + ek + '</label>';
     if (a.t === 'select') return '<label class="alan">' + etiket + '<select name="' + a.k + '">' + a.opt.map(function (o) { return '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(v) ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') + '</select>' + ek + '</label>';
     var tip = a.t === 'number' || a.t === 'money' ? 'number' : (a.t === 'url' ? 'url' : 'text');
     return '<label class="alan">' + etiket + '<input name="' + a.k + '" type="' + tip + '"' + (tip === 'number' ? ' step="' + (a.t === 'money' ? '0.01' : 'any') + '" min="0"' + (a.max ? ' max="' + a.max + '"' : '') : '') + (a.ornek ? ' placeholder="' + esc(a.ornek) + '"' : '') + ' value="' + esc(v) + '">' + ek + '</label>';
   }
 
-  function crudForm(kap, cfg, satir) {
-    var alanlar = typeof cfg.alanlar === 'function' ? cfg.alanlar() : cfg.alanlar;
+  function crudForm(kap, cfg, satir, yeniSira) {
+    var alanlar = (typeof cfg.alanlar === 'function' ? cfg.alanlar() : cfg.alanlar).filter(function (a) { return a.k !== 'sira'; });
     var p = pencere((satir ? 'Düzenle' : 'Yeni') + ': ' + cfg.tek, '<form id="cf" novalidate>' + alanlar.map(function (a) { return alanHtml(a, satir ? satir[a.k] : undefined); }).join('') +
       '<div id="cfh"></div><div class="satir-arac"><button class="btn ana" type="submit">Kaydet</button>' + (satir ? '<button class="btn tehlike" type="button" id="cfSil">Sil</button>' : '') + '</div></form>');
     var f = $('#cf', p.ic);
@@ -615,8 +679,9 @@
         o[a.k] = v;
       });
       if (eksik) { $('#cfh', p.ic).innerHTML = '<div class="hata-kutu">' + esc(eksik) + '</div>'; return; }
+      if (cfg.tablo === 'mekan_videolari' && o.url) o.platform = /youtu/i.test(o.url) ? 'youtube' : 'instagram';
       try {
-        if (satir) await guncelle(cfg.tablo, satir.id, o); else await ekle(cfg.tablo, o);
+        if (satir) await guncelle(cfg.tablo, satir.id, o); else await ekle(cfg.tablo, Object.assign({ sira: yeniSira || 0 }, cfg.varsayilan || {}, o));
         p.kapat(); await yerelTazele(); altCiz(); O.bildir('Kaydedildi', 'ok');
       } catch (er) { $('#cfh', p.ic).innerHTML = '<div class="hata-kutu">' + esc(O.hataMetni(er)) + '</div>'; }
     });
@@ -651,44 +716,69 @@
     return sb.storage.from('mekan-gorselleri').getPublicUrl(yol).data.publicUrl;
   }
 
-  async function fotoCiz(kap) {
-    var liste = await q(sb.from('mekan_fotograflari').select('*').eq('mekan_id', M.id).order('sira'));
-    var h = '<div class="crud-ust"><div><h2>Fotoğraflar</h2><p class="not" style="margin:4px 0 0">Galeride görünen fotoğraflar. Birden fazla seçebilirsiniz; otomatik küçültülür ve yüklenir.</p></div>' +
-      '<label class="btn ana" for="fYukle">Fotoğraf ekle</label><input id="fYukle" class="sr" type="file" accept="image/jpeg,image/png,image/webp" multiple></div><div id="fDurum" class="not" aria-live="polite"></div>';
-    h += liste.length ? '<div class="foto-izgara">' + liste.map(function (f) {
-      return '<figure class="foto" data-id="' + esc(f.id) + '"><img loading="lazy" src="' + esc(O.guvenliUrl(f.url)) + '" alt="' + esc(f.baslik || 'Fotoğraf') + '"><figcaption>' + esc(f.baslik || '') + (f.aktif === false ? ' (gizli)' : '') + '</figcaption>' +
+  async function fotoCiz(kap, tur) {
+    var hepsi = await q(sb.from('mekan_fotograflari').select('*').eq('mekan_id', M.id).order('sira').order('id'));
+    var liste = hepsi.filter(function (f) { return f.tur === tur; }), hero = tur === 'galeri' ? hepsi.filter(function (f) { return f.tur === 'hero'; }) : [];
+    var baslik = tur === 'makyaj' ? 'Make-up fotoğrafları' : 'Fotoğraflar';
+    var aciklama = tur === 'makyaj' ? 'Make-up penceresinde görünen fotoğraflar.' : 'Sitedeki galeride görünen fotoğraflar.';
+    function kart(f, i, sirali) {
+      return '<figure class="foto" data-id="' + esc(f.id) + '">' + (sirali ? TUTAMAC + '<span class="foto-no">' + (i + 1) + '</span>' : '') + '<img loading="lazy" src="' + esc(O.guvenliUrl(f.url)) + '" alt="' + esc(f.baslik || 'Fotoğraf') + '"><figcaption>' + esc(f.baslik || '') + (f.aktif === false ? ' (gizli)' : '') + '</figcaption>' +
         '<div class="foto-ara"><button class="btn cizgi kucuk" data-d="duzenle" type="button">Düzenle</button><button class="btn tehlike kucuk" data-d="sil" type="button">Sil</button></div></figure>';
-    }).join('') + '</div>' : '<div class="bos">Henüz fotoğraf eklenmedi.</div>';
-    kap.innerHTML = h;
-    $('#fYukle', kap).addEventListener('change', async function (e) {
-      var d = Array.prototype.slice.call(e.target.files || []), ok = 0, durum = $('#fDurum', kap), sira = liste.length;
+    }
+    var h = '<div class="crud-ust"><div><h2>' + baslik + '</h2><p class="not" style="margin:4px 0 0">' + aciklama + ' Birden fazla seçebilirsiniz; otomatik küçültülür ve yüklenir. Sırayı değiştirmek için fotoğrafın üstündeki ⋮⋮ simgesinden tutup sürükleyin.</p></div>' +
+      '<label class="btn ana" for="fYukle' + tur + '">Fotoğraf ekle</label><input id="fYukle' + tur + '" class="sr" type="file" accept="image/jpeg,image/png,image/webp" multiple></div><div class="not fdurum" aria-live="polite"></div>';
+    h += liste.length ? '<div class="foto-izgara">' + liste.map(function (f, i) { return kart(f, i, true); }).join('') + '</div>' : '<div class="bos">Henüz fotoğraf eklenmedi.</div>';
+    if (hero.length) h += '<h2 class="alt-baslik">Açılış görseli</h2><div class="foto-izgara hero-izgara">' + hero.map(function (f, i) { return kart(f, i, false); }).join('') + '</div>';
+    var ic = document.createElement('div'); ic.innerHTML = h; kap.innerHTML = ''; kap.appendChild(ic);
+    $('input[type=file]', ic).addEventListener('change', async function (e) {
+      var d = Array.prototype.slice.call(e.target.files || []), ok = 0, durum = $('.fdurum', ic), sira = sonSira(liste.concat(hero));
       for (var i = 0; i < d.length; i++) {
         durum.textContent = 'Yükleniyor: ' + (i + 1) + ' / ' + d.length;
-        try { var url = await gorselYukle(d[i], 1800); await ekle('mekan_fotograflari', { url: url, tur: 'galeri', sira: sira + i }); ok++; } catch (er) { hata(er); }
+        try { var url = await gorselYukle(d[i], 1800); await ekle('mekan_fotograflari', { url: url, tur: tur, sira: sira + i }); ok++; } catch (er) { hata(er); }
       }
       durum.textContent = ok + ' fotoğraf eklendi.';
-      fotoCiz(kap).catch(hata);
+      fotoCiz(kap, tur).catch(hata);
     });
-    kap.addEventListener('click', async function (e) {
+    var izgara = $('.foto-izgara', ic);
+    if (liste.length) siralanabilir(izgara, '.foto', function (ids) { siraKaydet('mekan_fotograflari', ids).then(function () { fotoCiz(kap, tur).catch(hata); }); });
+    ic.addEventListener('click', async function (e) {
       var b = e.target.closest('[data-d]'); if (!b) return;
-      var id = b.closest('.foto').getAttribute('data-id'), f = liste.filter(function (x) { return x.id === id; })[0];
+      var id = b.closest('.foto').getAttribute('data-id'), f = hepsi.filter(function (x) { return x.id === id; })[0];
       if (b.getAttribute('data-d') === 'sil') {
         if (!onay('Fotoğraf silinsin mi?')) return;
-        try { await sil('mekan_fotograflari', id); fotoCiz(kap).catch(hata); } catch (er) { hata(er); }
+        try { await sil('mekan_fotograflari', id); fotoCiz(kap, tur).catch(hata); } catch (er) { hata(er); }
       } else {
-        var p = pencere('Fotoğrafı düzenle', '<form id="ff" novalidate><label class="alan"><span>Başlık <em>(isteğe bağlı)</em></span><input name="baslik" value="' + esc(f.baslik || '') + '"></label>' +
-          '<div class="ikili"><label class="alan"><span>Türü</span><select name="tur"><option value="galeri"' + (f.tur === 'galeri' ? ' selected' : '') + '>Galeri</option><option value="hero"' + (f.tur === 'hero' ? ' selected' : '') + '>Açılış görseli</option></select></label>' +
-          '<label class="alan"><span>Sıra</span><input name="sira" type="number" value="' + esc(f.sira) + '"></label></div><label class="onay"><input type="checkbox" name="aktif"' + (f.aktif !== false ? ' checked' : '') + '><span>Sitede göster</span></label><button class="btn ana tam" type="submit">Kaydet</button></form>');
-        $('#ff', p.ic).addEventListener('submit', async function (ev) {
-          ev.preventDefault(); var fm = ev.target;
-          try { await guncelle('mekan_fotograflari', id, { baslik: fm.baslik.value.trim() || null, tur: fm.tur.value, sira: sayi(fm.sira.value) || 0, aktif: fm.aktif.checked }); p.kapat(); fotoCiz(kap).catch(hata); } catch (er) { hata(er); }
+        var turSec = tur === 'makyaj' ? '' : '<label class="alan"><span>Türü</span><select name="tur"><option value="galeri"' + (f.tur === 'galeri' ? ' selected' : '') + '>Galeri</option><option value="hero"' + (f.tur === 'hero' ? ' selected' : '') + '>Açılış görseli</option></select></label>';
+        var pn = pencere('Fotoğrafı düzenle', '<form id="ff" novalidate><label class="alan"><span>Başlık <em>(isteğe bağlı)</em></span><input name="baslik" value="' + esc(f.baslik || '') + '"></label>' + turSec +
+          '<label class="onay"><input type="checkbox" name="aktif"' + (f.aktif !== false ? ' checked' : '') + '><span>Sitede göster</span></label><button class="btn ana tam" type="submit">Kaydet</button></form>');
+        $('#ff', pn.ic).addEventListener('submit', async function (ev) {
+          ev.preventDefault(); var fm = ev.target, o = { baslik: fm.baslik.value.trim() || null, aktif: fm.aktif.checked };
+          if (fm.tur) o.tur = fm.tur.value;
+          try { await guncelle('mekan_fotograflari', id, o); pn.kapat(); fotoCiz(kap, tur).catch(hata); } catch (er) { hata(er); }
         });
       }
-    }, { once: false });
+    });
+  }
+
+  /* ---- Make-up sekmesi: yazı, işlemler, fotoğraflar, videolar ---- */
+  async function makyajCiz(kap) {
+    kap.innerHTML = '<form id="mkf" novalidate><h2>Make-up bölümü</h2><p class="not">Sitede "Make-up" kutusuna basınca açılan pencerenin yazısı. Fotoğraf, video ve işlemleri aşağıdan ekleyin; içerik girilince kutu sitede otomatik açılır.</p>' +
+      '<label class="alan"><span>Başlık <em>(isteğe bağlı)</em></span><input name="makyaj_baslik" value="' + esc(M.makyaj_baslik || '') + '" placeholder="Gelin make-up ve saç tasarımı"></label>' +
+      '<label class="alan"><span>Giriş yazısı</span><textarea name="makyaj_yazi" rows="5">' + esc(M.makyaj_yazi || '') + '</textarea><small class="yardim">Paragraf için araya boş satır bırakın.</small></label>' +
+      '<div id="mkh"></div><button class="btn ana" type="submit">Yazıyı kaydet</button></form>' +
+      '<div id="mkHiz" style="margin-top:28px"></div><div id="mkFoto" style="margin-top:28px"></div><div id="mkVid" style="margin-top:28px"></div>';
+    $('#mkf', kap).addEventListener('submit', async function (e) {
+      e.preventDefault(); var f = e.target;
+      try { var r = await guncelle('mekanlar', M.id, { makyaj_baslik: f.makyaj_baslik.value.trim() || null, makyaj_yazi: f.makyaj_yazi.value.trim() || null }); M = Object.assign(M, r); O.bildir('Kaydedildi', 'ok'); }
+      catch (er) { $('#mkh', kap).innerHTML = '<div class="hata-kutu">' + esc(O.hataMetni(er)) + ' Supabase\'de supabase-paket1.sql dosyasını çalıştırdığınızdan emin olun.</div>'; }
+    });
+    crud($('#mkHiz', kap), CFG.makyaj_hiz).catch(function (er) { $('#mkHiz', kap).innerHTML = '<div class="hata-kutu">' + esc(O.hataMetni(er)) + ' Supabase\'de supabase-paket1.sql dosyasını çalıştırın.</div>'; });
+    fotoCiz($('#mkFoto', kap), 'makyaj').catch(hata);
+    crud($('#mkVid', kap), CFG.makyaj_video).catch(hata);
   }
 
   /* ================= SİTE AYARI ================= */
-  var BOLUMLER = [['tarih_sorgu', 'Tarih müsaitlik sorgusu'], ['galeri', 'Galeri'], ['hakkimizda', 'Hakkımızda bandı'], ['fiyatlar', 'Güncel fiyatlar'], ['teklif', 'Teklif al'], ['talep', 'Talep gir'], ['menu', 'Menü'], ['ozellikler', 'Mekan özellikleri'], ['firmalar', 'Anlaşmalı firmalar'], ['cift_ozel', 'Çiftlere özel giriş'], ['shorts', 'Kısa videolar'], ['klipler', 'Kliplerimiz (klip videoları)'], ['yakinda', 'Hazır olmayan kutuları "Yakında" diye göster']];
+  var BOLUMLER = [['tarih_sorgu', 'Tarih müsaitlik sorgusu'], ['galeri', 'Galeri'], ['hakkimizda', 'Hakkımızda bandı'], ['fiyatlar', 'Güncel fiyatlar'], ['teklif', 'Teklif al'], ['talep', 'Talep gir'], ['menu', 'Menü'], ['makeup', 'Make-up'], ['ozellikler', 'Mekan özellikleri'], ['firmalar', 'Anlaşmalı firmalar'], ['cift_ozel', 'Çiftlere özel giriş'], ['shorts', 'Shorts'], ['klipler', 'Kliplerimiz (klip videoları)'], ['foto_imaj', 'Foto İmaj (fotoğraf hazırlama uygulaması)'], ['movi_imaj', 'Movi İmaj (video kurgu uygulaması)'], ['imaj_ad', 'Foto ve video çıktılarına mekan adını silik yazı olarak ekle'], ['yakinda', 'Hazır olmayan kutuları "Yakında" diye göster']];
   function ayarCiz() {
     var b = M.bolumler || {};
     function gorselAlan(ad, e, deger, yardim) {
@@ -710,7 +800,7 @@
       '<h2 class="alt-baslik">Hakkımızda yazısı</h2><label class="alan"><span>Yazı <em>(paragraflar arasında boş satır bırakın)</em></span><textarea name="hakkinda" rows="6">' + esc(M.hakkinda || '') + '</textarea></label>' +
       '<h2 class="alt-baslik">Erken rezervasyon indirimi</h2><label class="onay"><input type="checkbox" name="erken_rez_aktif"' + (M.erken_rez_aktif ? ' checked' : '') + '><span>Sitede göster</span></label>' +
       '<div class="ikili"><label class="alan"><span>İndirim oranı (%)</span><input name="erken_rez_oran" type="number" min="0" max="100" value="' + esc(M.erken_rez_oran) + '"></label><label class="alan"><span>En az kaç ay önceden</span><input name="erken_rez_ay" type="number" min="0" value="' + esc(M.erken_rez_ay) + '"></label></div>' +
-      '<h2 class="alt-baslik">Sitede görünecek bölümler</h2><div class="bolum-sec">' + BOLUMLER.map(function (x) { return '<label class="onay"><input type="checkbox" name="b_' + x[0] + '"' + (b[x[0]] === false ? '' : ' checked') + '><span>' + esc(x[1]) + '</span></label>'; }).join('') + '</div>' +
+      '<h2 class="alt-baslik">Sitede görünecek bölümler</h2><div class="bolum-sec">' + BOLUMLER.map(function (x) { return '<label class="onay"><input type="checkbox" name="b_' + x[0] + '"' + ((x[0] === 'imaj_ad' ? b.imaj_ad === true : b[x[0]] !== false) ? ' checked' : '') + '><span>' + esc(x[1]) + '</span></label>'; }).join('') + '</div>' +
       '<h2 class="alt-baslik">Aydınlatma metni (KVKK)</h2><label class="alan"><span>Metin <em>(boşsa genel bir metin gösterilir)</em></span><textarea name="kvkk_metni" rows="6">' + esc(M.kvkk_metni || '') + '</textarea></label>' +
       '<p class="not" style="margin-top:-8px">Resmî metni kendi hukuk danışmanınızla hazırlayın ve buraya yapıştırın.</p><div id="afh"></div><button class="btn ana" type="submit">Ayarları kaydet</button></form>';
     aktifSayfa().innerHTML = h;

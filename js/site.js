@@ -6,7 +6,7 @@
   var $$ = function (s, k) { return Array.prototype.slice.call((k || document).querySelectorAll(s)); };
 
   var sb = null, M = null;
-  var D = { salonlar: [], foto: [], video: [], kat: [], kalem: [], menu: [], ozellik: [], firma: [] };
+  var D = { salonlar: [], foto: [], video: [], kat: [], kalem: [], menu: [], ozellik: [], firma: [], makyaj: [] };
 
   /* ---------- Başlangıç ---------- */
   function hataSayfasi(baslik, metin) {
@@ -34,12 +34,12 @@
     M = r.data;
     var VK = (A.VARSAYILAN || {});   // panelde boş bırakılan alanlar config.js'teki değerle dolar
     Object.keys(VK).forEach(function (k) { if (!M[k]) M[k] = VK[k]; });
-    function s(t) { return sb.from(t).select('*').eq('mekan_id', M.id).order('sira', { ascending: true }); }
+    function s(t) { return sb.from(t).select('*').eq('mekan_id', M.id).order('sira', { ascending: true }).order('id', { ascending: true }); }
     var x = await Promise.all([s('salonlar'), s('mekan_fotograflari'), s('mekan_videolari'), s('fiyat_kategorileri'),
-      s('fiyat_kalemleri'), s('menuler'), s('ozellikler'), s('anlasmali_firmalar')]);
-    x.forEach(function (q) { if (q.error) throw q.error; });
+      s('fiyat_kalemleri'), s('menuler'), s('ozellikler'), s('anlasmali_firmalar'), s('makyaj_hizmetleri')]);
+    x.slice(0, 8).forEach(function (q) { if (q.error) throw q.error; });
     D.salonlar = x[0].data || []; D.foto = x[1].data || []; D.video = x[2].data || []; D.kat = x[3].data || [];
-    D.kalem = x[4].data || []; D.menu = x[5].data || []; D.ozellik = x[6].data || []; D.firma = x[7].data || [];
+    D.kalem = x[4].data || []; D.menu = x[5].data || []; D.ozellik = x[6].data || []; D.firma = x[7].data || []; D.makyaj = (x[8] && !x[8].error && x[8].data) || [];
   }
 
   function acik(k) { return !(M.bolumler && M.bolumler[k] === false); }
@@ -62,7 +62,13 @@
     var ozelAcik = acik('cift_ozel');
     var yak = acik('yakinda');                       // "Yakında" kutuları gösterilsin mi
     var klipler = acik('klipler') ? D.video.filter(function (v) { return v.bolum === 'klip'; }) : [];
-    var ikinci = ozelAcik || videolar.length > 0 || yak;
+    var makyajFoto = D.foto.filter(function (f) { return f.tur === 'makyaj'; });
+    var makyajVideo = D.video.filter(function (v) { return v.bolum === 'makyaj'; });
+    var makyajVar = acik('makeup') && !!(D.makyaj.length || makyajFoto.length || makyajVideo.length || M.makyaj_yazi);
+    var imajAd = encodeURIComponent(M.ad);
+    var imajFiligran = !!(M.bolumler && M.bolumler.imaj_ad === true);
+    var fotoImajAcik = acik('foto_imaj'), moviImajAcik = acik('movi_imaj');
+    var ikinci = ozelAcik || yak || fotoImajAcik || moviImajAcik;
 
     var h = '';
     h += '<header class="ust"><a class="marka" href="./">' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + '<span>' + esc(M.ad) + '</span></a><!--NAV-->' +
@@ -108,7 +114,7 @@
       { k: 'firmalar', ad: 'Anlaşmalı firmalar', i: 'el', alt: 'Gelin arabası, çiçekçi, fotoğrafçı, gelinlikçi, make-up, bando, catering', on: acik('firmalar') },
       { k: 'dj', ad: 'DJ müzik yükle', i: 'muzik', yak: true },
       { k: 'menu', ad: 'Menü', i: 'tabak', on: acik('menu') },
-      { k: 'makeup', ad: 'Make-up', i: 'makyaj', yak: true },
+      { k: 'makyaj', ad: 'Make-up', i: 'makyaj', on: makyajVar, yak: !makyajVar && acik('makeup') },
       { k: 'ozellikler', ad: 'Mekan özellikleri', i: 'yildiz', on: acik('ozellikler') }
     ];
     var K = [
@@ -162,7 +168,10 @@
     if (ikinci) {
       h += '<section class="bolme" id="b1" aria-labelledby="s1">';
       var mini = '';
-      if (yak) ['Movi İmaj', 'Foto İmaj', 'Foto Dergi'].forEach(function (a) { mini += '<button type="button" class="islem yok mini" disabled aria-disabled="true"><b>' + esc(a) + '</b><small>Yakında</small></button>'; });
+      var imajQ = imajFiligran ? '?ad=' + imajAd : '';
+      if (moviImajAcik) mini += '<a class="islem mini baglanti" href="movi-imaj.html' + imajQ + '"><b>Movi İmaj</b></a>';
+      if (fotoImajAcik) mini += '<a class="islem mini baglanti" href="foto-imaj.html' + imajQ + '"><b>Foto İmaj</b></a>';
+      if (yak) mini += '<button type="button" class="islem yok mini" disabled aria-disabled="true"><b>Foto Dergi</b><small>Yakında</small></button>';
       if (ozelAcik) mini += '<button type="button" class="islem mini" data-ankraj="ozelK"><b>Foto ve video indir</b></button>';
       if (mini) h += '<div class="kisim k-mini"><h2>Mini uygulamalarımız</h2><div class="kutular dort kucuk-sira">' + mini + '</div></div>';
       if (ozelAcik) {
@@ -170,18 +179,14 @@
           '<form id="ozelForm" novalidate><label class="alan"><span>Şifreniz</span><input id="ozelKod" class="kod" autocomplete="off" autocapitalize="characters" maxlength="12" placeholder="ABCD-1234"></label>' +
           '<div id="ozelHata"></div><button class="btn ana tam" type="submit">' + ik('kilit', 20) + 'Giriş yap</button></form></div></div>';
       }
-      if (videolar.length) {
-        h += '<div class="kisim k-video"><h2>Shorts</h2><div class="video-izgara">';
-        videolar.forEach(function (v, i) {
-          h += '<button type="button" class="video" data-video="' + i + '" aria-label="' + esc((v.baslik || 'Videoyu') + ' oynat') + '"><span class="pl">' + ik('oynat', 26) + '</span><span class="et">' + esc(v.baslik || '') + '</span></button>';
-        });
-        h += '</div>';
-        if (M.instagram) h += '<p style="margin:14px 4px 0"><a class="btn hafif" target="_blank" rel="noopener" href="' + esc(O.instagramUrl(M.instagram)) + '">' + ik('instagram', 20) + 'Instagram\'da takip et</a></p>';
-        h += '</div>';
-      }
       h += '</section>';
     }
     h += '</main>';
+    if (videolar.length) {
+      h += '<section class="shorts-inline" id="shortsInline" aria-label="' + esc(M.ad) + ' Shorts"><div class="shorts-handblock" id="shortsHint"><div class="shorts-hint-label">' + esc(M.ad) + ' Shorts</div><div class="shorts-hand" aria-hidden="true">👇</div><div class="shorts-hint-sub">Aşağı kaydır</div></div>' +
+        '<div class="shorts-peekwrap"><div class="shorts-peek"><img id="shortsPeekImg" alt=""></div></div>' +
+        '<div class="shorts-overlay" id="shortsOverlay"><div class="shorts-feed" id="shortsFeed"></div></div></section>';
+    }
     var fl = '';
     var igUrl = O.sosyalUrl('instagram', M.instagram);
     var AY = window.AYAR || {}, SY = AY.SOSYAL || {};
@@ -200,7 +205,7 @@
       '<div class="alt-marka">' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + '<b>' + esc(M.ad) + '</b></div>' +
       (AY0.ETIKET ? '<p class="alt-etiket">' + esc(AY0.ETIKET) + '</p>' : '') +
       (fl ? '<div class="alt-link">' + fl + '</div>' : '') +
-      ((tel || M.adres) ? '<p class="alt-iletisim">' + (tel ? '<a href="tel:' + esc(tel) + '">' + esc(M.telefon) + '</a>' : '') + (tel && M.adres ? '<br>' : '') + (M.adres ? esc(M.adres) : '') + '</p>' : '') +
+      ((tel || M.adres) ? '<p class="alt-iletisim">' + (tel ? '<a href="tel:' + esc(tel) + '"><span class="tel-ik">' + ik('telefon', 18) + '</span>' + esc(M.telefon) + '</a>' : '') + (tel && M.adres ? '<br>' : '') + (M.adres ? esc(M.adres) : '') + '</p>' : '') +
       '<div class="alt-alt"><span>© ' + new Date().getFullYear() + ' ' + esc(M.ad) + '. Tüm hakları saklıdır.</span>' +
       '<button type="button" id="kvkkAc">Aydınlatma metni</button><span>Evliliğe Evet ile hazırlandı</span></div></div></footer>';
 
@@ -213,6 +218,8 @@
     $('#uygulama').innerHTML = '<div class="sayfa">' + h + '</div>';
     VIDEOLAR = videolar;
     KLIPLER = klipler;
+    MAKYAJ = { foto: makyajFoto, video: makyajVideo };
+    if (window.VSHORTS) window.VSHORTS.kur(videolar, document.getElementById('shortsInline'), M.ad);
     GALERI = galeri;
     bagla();
     cerezUyari();
@@ -228,12 +235,12 @@
     return '<div class="harita"><iframe title="' + esc(M.ad) + ' konumu" src="' + esc(src) + '" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe></div>';
   }
 
-  var ISLEMLER = [], VIDEOLAR = [], KLIPLER = [], GALERI = [];
+  var ISLEMLER = [], VIDEOLAR = [], KLIPLER = [], GALERI = [], MAKYAJ = { foto: [], video: [] };
 
   /* ---------- Olaylar ---------- */
   function islemCalistir(k, ek) {
     ({ fiyatlar: fiyatlarAc, teklif: function () { formAc('teklif', ek); }, talep: function () { formAc('talep', ek); },
-      firmalar: firmalarAc, menu: menuAc, ozellikler: ozelliklerAc, klipler: klipAc, galeri: galeriAc })[k]();
+      firmalar: firmalarAc, menu: menuAc, ozellikler: ozelliklerAc, klipler: klipAc, galeri: galeriAc, makyaj: makyajAc })[k]();
   }
 
   function sekmeAc(i) {
@@ -252,7 +259,9 @@
       if (s) { sekmeAc(+s.getAttribute('data-s')); return; }
       var f = e.target.closest('[data-foto]');
       if (f) { buyut(+f.getAttribute('data-foto')); return; }
-      var v = e.target.closest('[data-video], [data-klip]');
+      var mf = e.target.closest('[data-mfoto]');
+      if (mf) { buyut(+mf.getAttribute('data-mfoto'), MAKYAJ.foto); return; }
+      var v = e.target.closest('[data-video], [data-klip], [data-mvideo]');
       if (v) { videoOynat(v); }
     });
     $('#menuDugme').addEventListener('click', menuPenceresi);
@@ -347,21 +356,22 @@
     pencere('Galeri', h + '</div>');
   }
 
-  function buyut(i) {
-    if (!GALERI[i]) return;
+  function buyut(i, liste) {
+    var GL = liste || GALERI;
+    if (!GL[i]) return;
     var l = document.createElement('div');
     l.className = 'lightbox'; l.setAttribute('role', 'dialog'); l.setAttribute('aria-label', 'Fotoğraf');
-    var coklu = GALERI.length > 1;
+    var coklu = GL.length > 1;
     l.innerHTML = '<button class="kapat" aria-label="Kapat">' + ik('kapat', 26) + '</button>' +
       (coklu ? '<button class="lb-ok sol" aria-label="Önceki">' + ik('sol', 28) + '</button><button class="lb-ok sag" aria-label="Sonraki">' + ik('sag', 28) + '</button>' : '') +
       '<img alt=""><div class="lb-say"></div>';
     var img = $('img', l), say = $('.lb-say', l);
     function goster() {
-      var f = GALERI[i];
+      var f = GL[i];
       img.src = O.guvenliUrl(f.url) || ''; img.alt = f.baslik || M.ad;
-      say.textContent = (f.baslik ? f.baslik + '  ' : '') + (i + 1) + ' / ' + GALERI.length;
+      say.textContent = (f.baslik ? f.baslik + '  ' : '') + (i + 1) + ' / ' + GL.length;
     }
-    function git(d) { i = (i + d + GALERI.length) % GALERI.length; goster(); }
+    function git(d) { i = (i + d + GL.length) % GL.length; goster(); }
     function kapat() { l.remove(); document.removeEventListener('keydown', tus); }
     function tus(e) {
       if (e.key === 'Escape') kapat();
@@ -427,12 +437,35 @@
     $('#fTeklif', ic).addEventListener('click', function () { formAc('teklif'); });
   }
 
+  function ytKapak(u) { var m = String(u || '').match(/(?:shorts\/|v=|youtu\.be\/|embed\/|live\/)([A-Za-z0-9_-]{11})/); return m ? 'https://i.ytimg.com/vi/' + m[1] + '/hqdefault.jpg' : ''; }
+  function videoKart(attr, i, v) {
+    var k = ytKapak(v.url);
+    return '<button type="button" class="video' + (k ? ' kapakli' : '') + '" ' + attr + '="' + i + '"' + (k ? ' style="background-image:url(' + esc(k) + ')"' : '') + ' aria-label="' + esc((v.baslik || 'Videoyu') + ' oynat') + '"><span class="pl">' + ik('oynat', 26) + '</span><span class="et">' + esc(v.baslik || '') + '</span></button>';
+  }
   function klipAc() {
     var h = '<div class="video-izgara">';
-    KLIPLER.forEach(function (v, i) {
-      h += '<button type="button" class="video" data-klip="' + i + '" aria-label="' + esc((v.baslik || 'Videoyu') + ' oynat') + '"><span class="pl">' + ik('oynat', 26) + '</span><span class="et">' + esc(v.baslik || '') + '</span></button>';
-    });
+    KLIPLER.forEach(function (v, i) { h += videoKart('data-klip', i, v); });
     pencere('Kliplerimiz', h + '</div>');
+  }
+
+  function makyajAc() {
+    var h = '';
+    if (M.makyaj_yazi) h += String(M.makyaj_yazi).split(/\n{2,}/).map(function (p) { return '<p class="mk-yazi">' + esc(p.trim()).replace(/\n/g, '<br>') + '</p>'; }).join('');
+    if (MAKYAJ.foto.length) {
+      h += '<div class="mk-foto">' + MAKYAJ.foto.map(function (f, i) {
+        var u = O.guvenliUrl(f.url); return u ? '<button type="button" data-mfoto="' + i + '" aria-label="' + esc(f.baslik || 'Fotoğrafı büyüt') + '"><img loading="lazy" src="' + esc(u) + '" alt="' + esc(f.baslik || 'Make-up') + '"></button>' : '';
+      }).join('') + '</div>';
+    }
+    if (D.makyaj.length) {
+      h += '<h3 class="mk-alt">Yapılan işlemler</h3><ul class="mk-hiz">' + D.makyaj.map(function (x) {
+        return '<li><h3>' + esc(x.baslik) + '</h3>' + (x.aciklama ? String(x.aciklama).split(/\n{2,}/).map(function (p) { return '<p>' + esc(p.trim()).replace(/\n/g, '<br>') + '</p>'; }).join('') : '') +
+          (x.fiyat != null && x.fiyat !== '' ? '<span class="mk-fiyat">' + esc(O.para(x.fiyat)) + '</span>' : '') + '</li>';
+      }).join('') + '</ul>';
+    }
+    if (MAKYAJ.video.length) h += '<h3 class="mk-alt">Videolar</h3><div class="video-izgara">' + MAKYAJ.video.map(function (v, i) { return videoKart('data-mvideo', i, v); }).join('') + '</div>';
+    var wa = O.waLink(M.whatsapp || M.telefon, 'Merhaba, make-up hizmeti hakkında bilgi almak istiyorum.');
+    if (wa) h += '<p style="margin:16px 0 0"><a class="btn ana tam" target="_blank" rel="noopener" href="' + esc(wa) + '">' + ik('whatsapp', 20) + 'Make-up için WhatsApp\'tan yaz</a></p>';
+    pencere(M.makyaj_baslik || 'Make-up', h || '<p class="not">Yakında burada.</p>');
   }
 
   function menuAc() {
@@ -581,14 +614,11 @@
 
   /* ---------- Videolar ---------- */
   function videoOynat(btn) {
-    var v = btn.hasAttribute('data-klip') ? KLIPLER[+btn.getAttribute('data-klip')] : VIDEOLAR[+btn.getAttribute('data-video')]; if (!v) return;
+    var v = btn.hasAttribute('data-mvideo') ? MAKYAJ.video[+btn.getAttribute('data-mvideo')] : (btn.hasAttribute('data-klip') ? KLIPLER[+btn.getAttribute('data-klip')] : VIDEOLAR[+btn.getAttribute('data-video')]); if (!v) return;
     var src = '', u = String(v.url || ''), m;
-    if (v.platform === 'youtube') {
-      m = u.match(/(?:shorts\/|v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
-      if (m) src = 'https://www.youtube.com/embed/' + m[1] + '?autoplay=1&playsinline=1&rel=0';
-    } else {
-      m = u.match(/instagram\.com\/(reel|reels|p|tv)\/([A-Za-z0-9_-]+)/);
-      if (m) src = 'https://www.instagram.com/' + (m[1] === 'reels' ? 'reel' : m[1]) + '/' + m[2] + '/embed';
+    m = u.match(/(?:shorts\/|v=|youtu\.be\/|embed\/|live\/)([A-Za-z0-9_-]{11})/);
+    if (m) {
+      src = 'https://www.youtube-nocookie.com/embed/' + m[1] + '?autoplay=1&playsinline=1&rel=0';
     }
     var link = O.guvenliUrl(u);
     if (!src) { if (link) window.open(link, '_blank', 'noopener'); return; }
