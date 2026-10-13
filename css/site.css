@@ -314,11 +314,9 @@
 
 
 /* ===== Shorts: alt bilgideki yarım daire düğme + tam ekran dikey akış ===== */
-.alt-bilgi { position: relative; }
-.alt-bilgi:has(.shorts-yarim) { padding-bottom: 76px; }
-.alt-bilgi .shorts-yarim { text-decoration: none; position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 132px; height: 66px; padding: 6px 0 0; border: 0; border-radius: 66px 66px 0 0; background: #fff; color: #17181c; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 0; cursor: pointer; box-shadow: 0 -2px 14px rgba(0, 0, 0, .25); }
-.alt-bilgi .shorts-yarim b { font-size: 15px; letter-spacing: .3px; line-height: 1; }
-.alt-bilgi .shorts-yarim .el { font-size: 24px; line-height: 1.1; animation: elAsagi 1.3s ease-in-out infinite; }
+.shorts-serit { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%; margin: 28px 0 -40px; padding: 8px 0 0; border: 0; background: none; color: var(--ink); cursor: pointer; position: relative; z-index: 2; font-family: inherit; }
+.shorts-serit b { font-size: 16px; letter-spacing: .3px; line-height: 1; }
+.shorts-serit .el { font-size: 30px; line-height: 1.1; animation: elAsagi 1.3s ease-in-out infinite; }
 @keyframes elAsagi { 0%, 100% { transform: translateY(-3px); opacity: .55; } 50% { transform: translateY(6px); opacity: 1; } }
 .shorts-overlay { position: fixed; inset: 0; z-index: 500; display: none; background: #000; }
 .shorts-overlay.open { display: block; }
