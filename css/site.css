@@ -368,3 +368,10 @@
 .bolme, .bolme.aktif { display: block; }
 /* Mobil: ana resimde gelin ve damat birlikte görünsün */
 @media (max-width: 959px) { .acilis > img { object-position: 78% 35%; } }
+
+/* Açılış: telefonda logo, bilgisayarda boş sayfa (yazı yok) */
+.isleniyor.yukle { min-height: 70dvh; display: grid; place-items: center; }
+.isleniyor.yukle img { width: 76px; height: auto; animation: yukleNefes 1.6s ease-in-out infinite; }
+@keyframes yukleNefes { 0%, 100% { opacity: .35; transform: scale(.96); } 50% { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .isleniyor.yukle img { animation: none; opacity: .8; } }
+@media (min-width: 960px) { .isleniyor.yukle img { visibility: hidden; } }
