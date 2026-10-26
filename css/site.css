@@ -369,9 +369,11 @@
 /* Mobil: ana resimde gelin ve damat birlikte görünsün */
 @media (max-width: 959px) { .acilis > img { object-position: 78% 35%; } }
 
-/* Açılış: telefonda logo, bilgisayarda boş sayfa (yazı yok) */
-.isleniyor.yukle { min-height: 70dvh; display: grid; place-items: center; }
-.isleniyor.yukle img { width: 76px; height: auto; animation: yukleNefes 1.6s ease-in-out infinite; }
-@keyframes yukleNefes { 0%, 100% { opacity: .35; transform: scale(.96); } 50% { opacity: 1; transform: scale(1); } }
-@media (prefers-reduced-motion: reduce) { .isleniyor.yukle img { animation: none; opacity: .8; } }
-@media (min-width: 960px) { .isleniyor.yukle img { visibility: hidden; } }
+/* Açılış: telefonda ekranın ortasında logo ve ad (en az 1 sn), bilgisayarda boş sayfa */
+.isleniyor.yukle { position: fixed; inset: 0; z-index: 5; display: grid; place-items: center; background: #fff; }
+.isleniyor.yukle .yukle-ic { display: grid; justify-items: center; gap: 14px; }
+.isleniyor.yukle img { width: 104px; height: auto; filter: brightness(.62) saturate(1.5) contrast(1.15); animation: yukleNefes 1.6s ease-in-out infinite; }
+.isleniyor.yukle b { font: 700 28px/1.1 var(--serif); letter-spacing: .01em; color: #3b1020; }
+@keyframes yukleNefes { 0%, 100% { opacity: .75; transform: scale(.97); } 50% { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .isleniyor.yukle img { animation: none; } }
+@media (min-width: 960px) { .isleniyor.yukle .yukle-ic { visibility: hidden; } }

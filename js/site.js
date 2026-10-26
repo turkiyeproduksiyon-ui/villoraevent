@@ -19,7 +19,8 @@
       return;
     }
     sb = window.supabase.createClient(A.SUPABASE_URL, A.SUPABASE_KEY);
-    yukle().then(ciz).catch(function (e) {
+    var t0 = Date.now(), asgari = window.matchMedia('(max-width: 959px)').matches ? 1000 : 0;   /* telefonda açılış logosu en az 1 sn görünsün */
+    yukle().then(function () { return new Promise(function (ok) { setTimeout(ok, Math.max(0, asgari - (Date.now() - t0))); }); }).then(ciz).catch(function (e) {
       var m = e && e.message;
       if (m === 'mekan_yok') hataSayfasi('Mekan bulunamadı', 'Bu adres şu anda yayında değil.');
       else hataSayfasi('Sayfa yüklenemedi', 'İnternet bağlantınızı kontrol edip sayfayı yenileyin.');
