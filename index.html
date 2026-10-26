@@ -13,16 +13,25 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Villora">
 <link rel="stylesheet" href="css/ortak.css?v=22">
-<link rel="stylesheet" href="css/site.css?v=22">
+<link rel="stylesheet" href="css/site.css?v=23">
 </head>
 <body>
 <div id="uygulama"><div class="isleniyor">Yükleniyor...</div></div>
 <noscript><div class="isleniyor">Bu sayfanın çalışması için tarayıcınızda JavaScript açık olmalı.</div></noscript>
+<script>
+/* GEÇİCİ hata ayıklama: sayfa takılırsa nedeni ekrana yazar. Sorun çözülünce bu blok silinebilir. */
+(function(){var L=[];
+function yaz(m){L.push(m);var e=document.getElementById('uygulama');if(e&&/isleniyor/.test(e.innerHTML)){e.innerHTML='<div class="isleniyor" style="white-space:pre-wrap;text-align:left;max-width:680px;margin:40px auto;padding:16px;font-size:15px">Sayfa yüklenemedi. Bu yazının ekran görüntüsünü gönderin:\n\n'+L.join('\n\n').replace(/</g,'&lt;')+'</div>';}}
+window.addEventListener('error',function(e){var t=e.target;if(t&&(t.src||t.href)&&t!==window){yaz('DOSYA YÜKLENEMEDİ: '+(t.src||t.href));}else{yaz('HATA: '+e.message+' ('+String(e.filename||'').split('/').pop()+':'+e.lineno+')');}},true);
+window.addEventListener('unhandledrejection',function(e){yaz('SÖZ HATASI: '+(e.reason&&e.reason.message||e.reason));});
+setTimeout(function(){var e=document.getElementById('uygulama');if(e&&/Yükleniyor/.test(e.innerHTML)){yaz('10 saniye sonra hâlâ yükleniyor.\nsupabase kütüphanesi: '+typeof window.supabase+'\nAYAR: '+typeof window.AYAR+'\nORTAK: '+typeof window.ORTAK+'\nadres: '+location.href);}},10000);
+})();
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="js/config.js?v=22"></script>
 <script src="js/ortak.js?v=22"></script>
 <script src="js/shorts.js?v=22"></script>
-<script src="js/site.js?v=22"></script>
+<script src="js/site.js?v=23"></script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>
 </body>
 </html>
