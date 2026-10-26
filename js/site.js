@@ -241,6 +241,7 @@
       firmalar: firmalarAc, menu: menuAc, ozellikler: ozelliklerAc, klipler: klipAc, galeri: galeriAc, makyaj: makyajAc })[k]();
   }
 
+  function sekmeGorunur() { var t = $('.sekme'); return !!(t && t.offsetParent !== null); }
   function sekmeAc(i) {
     $$('.bolme').forEach(function (b, n) { b.classList.toggle('aktif', n === i); });
     $$('.sekme button').forEach(function (b, n) { b.setAttribute('aria-selected', n === i ? 'true' : 'false'); });
@@ -252,7 +253,7 @@
       var b = e.target.closest('[data-islem]');
       if (b) { islemCalistir(b.getAttribute('data-islem')); return; }
       var an = e.target.closest('[data-ankraj]');
-      if (an) { var hd = document.getElementById(an.getAttribute('data-ankraj')); if (hd) { var pn = hd.closest('.bolme'); if (pn && !pn.classList.contains('aktif') && !window.matchMedia('(min-width: 960px)').matches) sekmeAc(+pn.id.slice(1)); hd.scrollIntoView({ behavior: 'smooth', block: 'start' }); } return; }
+      if (an) { var hd = document.getElementById(an.getAttribute('data-ankraj')); if (hd) { var pn = hd.closest('.bolme'); if (pn && sekmeGorunur() && !pn.classList.contains('aktif') && !window.matchMedia('(min-width: 960px)').matches) sekmeAc(+pn.id.slice(1)); hd.scrollIntoView({ behavior: 'smooth', block: 'start' }); } return; }
       var s = e.target.closest('.sekme button');
       if (s) { sekmeAc(+s.getAttribute('data-s')); return; }
       var f = e.target.closest('[data-foto]');
@@ -295,7 +296,7 @@
       var m = $('main');
       m.addEventListener('touchstart', function (e) { var t0 = e.touches[0]; x0 = t0.clientX; y0 = t0.clientY; yok = !!e.target.closest('.galeri-seri, iframe, input'); }, { passive: true });
       m.addEventListener('touchend', function (e) {
-        if (yok) return;
+        if (yok || !sekmeGorunur()) return;
         var t1 = e.changedTouches[0], dx = t1.clientX - x0, dy = t1.clientY - y0;
         if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.8) sekmeAc(dx < 0 ? 1 : 0);
       }, { passive: true });
@@ -340,7 +341,7 @@
       var b = e.target.closest('[data-m]'); if (!b) return;
       var k = b.getAttribute('data-m');
       kapatPencere();
-      if (k === '_ozel') sekmeAc(1); else islemCalistir(k);
+      if (k === '_ozel') { if (sekmeGorunur()) sekmeAc(1); else { var b1 = document.getElementById('b1'); if (b1) b1.scrollIntoView({ behavior: 'smooth', block: 'start' }); } } else islemCalistir(k);
     });
   }
 
