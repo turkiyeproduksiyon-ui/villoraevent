@@ -362,3 +362,9 @@
 .video.kapakli .pl, .video.kapakli .et { z-index: 1; }
 .alt-iletisim .tel-ik { display: inline-block; vertical-align: -3px; margin-right: 6px; }
 .islem.baglanti { text-decoration: none; display: flex; }
+
+/* Sekmeler kalktı: mekan ve mini uygulamalar tek sayfada alt alta (mobil ve masaüstü aynı mantık) */
+.sekme { display: none; }
+.bolme, .bolme.aktif { display: block; }
+/* Mobil: ana resimde gelin ve damat birlikte görünsün */
+@media (max-width: 959px) { .acilis > img { object-position: 78% 35%; } }
