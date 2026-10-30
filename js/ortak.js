@@ -145,7 +145,22 @@
     return 'Bir sorun oluştu. Tekrar deneyin. (' + (m || 'bilinmeyen hata') + ')';
   }
 
+  /* Menü içeriği: "[Başlık]" satırı bölüm başlığı, altındaki satırlar yemekler. Başlıksız satırlar tek bölüm olur. */
+  function menuAyir(metin) {
+    var bol = [], son = null;
+    String(metin || '').split(/\r?\n/).forEach(function (satir) {
+      var t = satir.trim(); if (!t) return;
+      var m = t.match(/^\[(.+)\]$/);
+      if (m) { son = { baslik: m[1].trim(), ogeler: [] }; bol.push(son); return; }
+      if (!son) { son = { baslik: '', ogeler: [] }; bol.push(son); }
+      son.ogeler.push(t);
+    });
+    return bol;
+  }
+  function satirlar(metin) { return String(metin || '').split(/\r?\n/).map(function (x) { return x.trim(); }).filter(Boolean); }
+
   window.ORTAK = {
+    menuAyir: menuAyir, satirlar: satirlar,
     esc: esc, para: para, tarihTR: tarihTR, tarihNesne: tarihNesne, bugunISO: bugunISO, isoYap: isoYap, AYLAR: AYLAR,
     guvenliUrl: guvenliUrl, instagramUrl: instagramUrl, sosyalUrl: sosyalUrl, waNumara: waNumara, waLink: waLink,
     renkUygula: renkUygula, ikon: ikon, bildir: bildir, hataMetni: hataMetni

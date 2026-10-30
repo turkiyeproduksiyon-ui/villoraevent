@@ -10,7 +10,8 @@
   var K = [];                       // cift_kayit_ozet satırları
   var sekme = 'takip', filtre = { ara: '', durum: '', yil: '' };
 
-  var DURUM = [['yeni', 'Yeni'], ['teklif_verildi', 'Teklif verildi'], ['rezerve', 'Rezerve'], ['sozlesme', 'Sözleşme yapıldı'], ['tamamlandi', 'Tamamlandı'], ['iptal', 'İptal']];
+  var DURUM = [['yeni', 'Yeni'], ['gorusme', 'Görüşme'], ['teklif_verildi', 'Teklif verildi'], ['rezerve', 'Rezerve'], ['sozlesme', 'Sözleşme yapıldı'], ['ertelendi', 'Ertelendi'], ['tamamlandi', 'Tamamlandı (hesap kapalı)'], ['iptal', 'İptal']];
+  var ILERLE = ['yeni', 'gorusme', 'teklif_verildi', 'rezerve', 'sozlesme', 'tamamlandi'];
   var DURUM_AD = {}; DURUM.forEach(function (d) { DURUM_AD[d[0]] = d[1]; });
   var DOLU = ['rezerve', 'sozlesme', 'tamamlandi'];
 
@@ -290,33 +291,78 @@
       var x = await Promise.all([
         q(sb.from('teklif_kalemleri').select('*').eq('kayit_id', id).order('sira').order('kalem_ad')),
         q(sb.from('odemeler').select('*').eq('kayit_id', id).order('vade_tarihi', { ascending: true, nullsFirst: false })),
-        sb.from('cift_hesaplari').select('*').eq('kayit_id', id).maybeSingle()
+        sb.from('cift_hesaplari').select('*').eq('kayit_id', id).maybeSingle(),
+        sb.from('sozlesme_sablonlari').select('*').eq('mekan_id', M.id).eq('aktif', true).limit(1).maybeSingle()
       ]);
-      S.kalem = x[0]; S.odeme = x[1]; S.hesap = x[2].data || null;
+      S.kalem = x[0]; S.odeme = x[1]; S.hesap = x[2].data || null; S.sablon = (x[3] && !x[3].error && x[3].data) || null;
     } catch (e) { hata(e); return; }
 
-    var p = pencere(k.ad + ' ' + k.soyad, '<div id="d-bilgi"></div><div id="d-kalem"></div><div id="d-odeme"></div><div id="d-hesap"></div>', { genis: true });
+    var p = pencere(k.ad + ' ' + k.soyad, '<div id="d-ozet"></div><div id="d-bilgi"></div><div id="d-kalem"></div><div id="d-odeme"></div><div id="d-hesap"></div>', { genis: true });
     p.kapaninca = function () { yenile().catch(hata); };
     var ic = p.ic;
 
     function bolum(baslik, govde, acik) { return '<details class="bolum"' + (acik ? ' open' : '') + '><summary>' + esc(baslik) + '</summary><div class="bolum-ic">' + govde + '</div></details>'; }
 
-    /* a) Bilgiler */
-    function cizBilgi() {
+    /* a) Para özeti */
+    function cizOzet() {
       var c = S.k;
-      $('#d-bilgi', ic).innerHTML = bolum('Çift ve düğün bilgileri',
+      var kutu = [['Salon kirası', c.salon_kirasi], ['Menü (kişi başı x kişi)', c.menu_tutar], ['Ek seçenekler', c.teklif_toplam], ['Sözleşme bedeli', c.sozlesme_bedeli],
+        ['Ekstra', c.ekstra_tutar], ['Genel toplam', c.tutar], ['Toplam tahsilat', c.odenen], ['Kalan', c.kalan]];
+      $('#d-ozet', ic).innerHTML = '<div class="ozet-sekiz">' + kutu.map(function (x) { return '<div><span>' + esc(x[0]) + '</span><b>' + esc(O.para(Number(x[1]) || 0)) + '</b></div>'; }).join('') + '</div>' +
+        '<div class="satir-arac"><button class="btn ana kucuk" type="button" id="oKaydet">Kaydet</button><button class="btn cizgi kucuk" type="button" id="oAktif">Aktif et</button>' +
+        '<button class="btn cizgi kucuk" type="button" id="oBakiye">Bakiye detayı</button></div>';
+      $('#oKaydet', ic).addEventListener('click', function () { kaydet(null, 'Kaydedildi').catch(hataKutu); });
+      $('#oAktif', ic).addEventListener('click', function () { kaydet({ durum: 'rezerve' }, 'Kayıt aktif edildi (Rezerve)').catch(hataKutu); });
+      $('#oBakiye', ic).addEventListener('click', function () { var d = $('#d-odeme details', ic); if (d) { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
+    }
+
+    /* b) Bilgiler ve sözleşme alanları */
+    var ORG = [['', 'Seçilmedi'], ['Düğün', 'Düğün'], ['Nikah', 'Nikah'], ['Nişan', 'Nişan'], ['Kına', 'Kına'], ['Diğer', 'Diğer']];
+    var SEANS = [['', 'Seçilmedi'], ['Gündüz', 'Gündüz'], ['Akşam', 'Akşam']];
+    function sec(liste, secili) { return liste.map(function (x) { return '<option value="' + esc(x[0]) + '"' + (x[0] === secili ? ' selected' : '') + '>' + esc(x[1]) + '</option>'; }).join(''); }
+    function orgTuru(c) { if (c.org_turu) return c.org_turu; var m = String(c.musteri_notu || '').match(/Organizasyon türü:\s*([^\n]+)/i); return m ? m[1].trim() : ''; }
+    function hataKutu(er) { var kutu = $('#bfh', ic); if (kutu) kutu.innerHTML = '<div class="hata-kutu">' + esc(O.hataMetni(er)) + '</div>'; else hata(er); }
+    function giris(et, ad, deger, ek) { return '<label class="alan"><span>' + et + '</span><input name="' + ad + '" value="' + esc(deger == null ? '' : deger) + '"' + (ek || '') + '></label>'; }
+    function cizBilgi() {
+      var c = S.k, kalan = DURUM_AD[c.durum] ? c.durum : 'yeni';
+      var menuSec = '<option value="">Seçilmedi</option>' + D.menu.map(function (m) { return '<option value="' + esc(m.id) + '"' + (m.id === c.menu_id ? ' selected' : '') + '>' + esc(m.ad) + '</option>'; }).join('');
+      $('#d-bilgi', ic).innerHTML = bolum('Çift, düğün ve sözleşme bilgileri',
         '<div class="ozet-satir">' + rozet(c.durum) + '<span class="soluk">' + esc(c.kaynak === 'teklif' ? 'Siteden teklif talebi' : c.kaynak === 'talep' ? 'Siteden talep' : 'Elle girildi') + ' · ' + esc((c.olusturma || '').slice(0, 10)) + '</span></div>' +
         (c.musteri_notu ? '<div class="alinti"><b>Çiftin notu</b><br>' + esc(c.musteri_notu) + '</div>' : '') +
-        '<form id="bf" novalidate><div class="ikili"><label class="alan"><span>Ad</span><input name="ad" value="' + esc(c.ad) + '"></label><label class="alan"><span>Soyad</span><input name="soyad" value="' + esc(c.soyad) + '"></label></div>' +
-        '<div class="ikili"><label class="alan"><span>Telefon</span><input name="telefon" type="tel" value="' + esc(c.telefon) + '"></label><label class="alan"><span>E-posta</span><input name="eposta" type="email" value="' + esc(c.eposta || '') + '"></label></div>' +
-        '<label class="alan"><span>Adres <em>(isteğe bağlı)</em></span><input name="adres" value="' + esc(c.adres || '') + '"></label>' +
-        '<div class="ikili"><label class="alan"><span>Durum</span><select name="durum">' + DURUM.map(function (d) { return '<option value="' + d[0] + '"' + (c.durum === d[0] ? ' selected' : '') + '>' + d[1] + '</option>'; }).join('') + '</select></label>' +
+        '<form id="bf" novalidate>' +
+        '<h3 class="form-baslik">Organizasyon sahibi</h3>' +
+        '<div class="ikili">' + giris('Çift adı', 'cift_adi', c.cift_adi, ' placeholder="Gelin - Damat"') + giris('E-posta', 'eposta', c.eposta, ' type="email"') + '</div>' +
+        '<div class="ikili">' + giris('Ad', 'ad', c.ad) + giris('Soyad', 'soyad', c.soyad) + '</div>' +
+        '<div class="ikili">' + giris('TC kimlik no / Sicil no', 'tc_no', c.tc_no, ' inputmode="numeric" autocomplete="off" maxlength="20"') + giris('Cep telefonu', 'telefon', c.telefon, ' type="tel"') + '</div>' +
+        '<div class="ikili">' + giris('Cep telefonu 2', 'telefon2', c.telefon2, ' type="tel"') + giris('İş telefonu', 'is_telefonu', c.is_telefonu, ' type="tel"') + '</div>' +
+        giris('Açık adres', 'adres', c.adres) +
+        '<h3 class="form-baslik">Organizasyon</h3>' +
+        '<div class="ikili"><label class="alan"><span>Organizasyon türü</span><select name="org_turu">' + sec(ORG, orgTuru(c)) + '</select></label>' +
+        '<label class="alan"><span>Menü</span><select name="menu_id">' + menuSec + '</select></label></div>' +
+        '<div class="ikili"><label class="alan"><span>Düğün tarihi</span><input name="tarih" type="date" value="' + esc(c.dugun_tarihi || '') + '"></label>' +
+        '<label class="alan"><span>Gün</span><input name="gun" value="' + esc(c.dugun_tarihi ? ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'][O.tarihNesne(c.dugun_tarihi).getDay()] : '') + '" readonly tabindex="-1"></label></div>' +
+        '<div class="ucu"><label class="alan"><span>Başlama saati</span><input name="baslama_saati" type="time" value="' + esc(c.baslama_saati || '') + '"></label>' +
+        '<label class="alan"><span>Bitiş saati</span><input name="bitis_saati" type="time" value="' + esc(c.bitis_saati || '') + '"></label>' +
+        '<label class="alan"><span>Seans</span><select name="seans">' + sec(SEANS, c.seans || '') + '</select></label></div>' +
+        '<div class="ikili"><label class="alan"><span>Kişi sayısı</span><input name="kisi" type="number" min="1" value="' + esc(c.kisi_sayisi || '') + '"></label>' +
         '<label class="alan"><span>Salon</span><select name="salon">' + salonSecenek(c.salon_id) + '</select></label></div>' +
-        '<div class="ikili"><label class="alan"><span>Düğün tarihi</span><input name="tarih" type="date" value="' + esc(c.dugun_tarihi || '') + '"></label><label class="alan"><span>Kişi sayısı</span><input name="kisi" type="number" min="1" value="' + esc(c.kisi_sayisi || '') + '"></label></div>' +
-        '<label class="alan"><span>Anlaşılan tutar <em>(boş bırakırsanız teklif toplamı kullanılır)</em></span><input name="tutar" type="number" step="0.01" min="0" value="' + esc(c.anlasma_tutari == null ? '' : c.anlasma_tutari) + '"></label>' +
-        '<label class="alan"><span>İç not <em>(çift görmez)</em></span><textarea name="not">' + esc(c.ic_not || '') + '</textarea></label>' +
-        '<div id="bfh"></div><div class="satir-arac"><button class="btn ana" type="submit">Bilgileri kaydet</button>' + (c.durum === 'iptal' ? '<button class="btn tehlike" type="button" id="kayitSil">Kaydı sil</button>' : '') + '</div></form>' +
+        '<h3 class="form-baslik">Ücret</h3>' +
+        '<div class="ikili"><label class="alan"><span>Salon kirası (TL)</span><input name="salon_kirasi" type="number" step="0.01" min="0" value="' + esc(c.salon_kirasi == null ? '' : c.salon_kirasi) + '"></label>' +
+        '<label class="alan"><span>Sözleşme tarihi</span><input name="sozlesme_tarihi" type="date" value="' + esc(c.sozlesme_tarihi || '') + '"></label></div>' +
+        '<div class="ikili"><label class="alan"><span>Ekstra (TL)</span><input name="ekstra_tutar" type="number" step="0.01" min="0" value="' + esc(c.ekstra_tutar == null ? '' : c.ekstra_tutar) + '"></label>' +
+        '<label class="alan"><span>Anlaşılan sözleşme bedeli <em>(boşsa kira + menü + ek seçenekler toplanır)</em></span><input name="tutar" type="number" step="0.01" min="0" value="' + esc(c.anlasma_tutari == null ? '' : c.anlasma_tutari) + '"></label></div>' +
+        '<label class="alan"><span>Sözleşmeye yazılacak not <em>(çıktıda "Not" kutusunda görünür)</em></span><textarea name="sozlesme_notu" rows="2">' + esc(c.sozlesme_notu || '') + '</textarea></label>' +
+        '<label class="alan"><span>İç not <em>(çift görmez, sözleşmede yok)</em></span><textarea name="not">' + esc(c.ic_not || '') + '</textarea></label>' +
+        '<label class="alan"><span>Durum</span><select name="durum">' + DURUM.map(function (d) { return '<option value="' + d[0] + '"' + (kalan === d[0] ? ' selected' : '') + '>' + d[1] + '</option>'; }).join('') + '</select></label>' +
+        '<div id="bfh"></div>' +
+        '<div class="satir-arac"><button class="btn ana" type="submit">Kaydet</button><button class="btn cizgi" type="button" data-d="_ileri">Devam et</button>' +
+        '<button class="btn cizgi" type="button" data-d="gorusme">Görüşme</button><button class="btn cizgi" type="button" data-d="rezerve">Rezerve</button>' +
+        '<button class="btn cizgi" type="button" data-d="ertelendi">Ertele</button></div>' +
+        '<div class="satir-arac"><button class="btn cizgi" type="button" id="bOnizle">Ön izleme</button><button class="btn ana" type="button" id="bSozlesme">Sözleşme (yazdır)</button>' +
+        '<button class="btn cizgi" type="button" data-d="tamamlandi">Hesabı kapat</button><button class="btn tehlike" type="button" data-d="iptal">İptal et</button>' +
+        (c.durum === 'iptal' ? '<button class="btn tehlike" type="button" id="kayitSil">Sil</button>' : '') + '</div></form>' +
         (c.durum === 'iptal' ? '<p class="not">İptal edilen kayıtlar silinebilir. Silinen kayıt, teklif ve ödemeleriyle birlikte geri getirilemez.</p>' : ''), true);
+      var f = $('#bf', ic);
       var ks = $('#kayitSil', ic);
       if (ks) ks.addEventListener('click', async function () {
         if (!onay('Bu kayıt, teklif ve ödemeleriyle birlikte kalıcı olarak silinsin mi? Bu işlem geri alınamaz.')) return;
@@ -325,16 +371,49 @@
           if (rs.error) throw rs.error;
           if (!rs.data || !rs.data.length) throw new Error('Silme izni yok. Supabase\'de supabase-paket1.sql dosyasını çalıştırın.');
           p.kapat(); O.bildir('Kayıt silindi', 'ok');
-        } catch (er) { $('#bfh', ic).innerHTML = '<div class="hata-kutu">' + esc(O.hataMetni(er)) + '</div>'; }
+        } catch (er) { hataKutu(er); }
       });
-      $('#bf', ic).addEventListener('submit', async function (e) {
-        e.preventDefault();
-        var f = e.target, v = function (n) { return f.elements[n].value.trim(); };
-        try {
-          await guncelle('cift_kayitlari', c.id, { ad: v('ad'), soyad: v('soyad'), telefon: v('telefon'), eposta: v('eposta') || null, adres: v('adres') || null, durum: v('durum'), salon_id: v('salon') || null, dugun_tarihi: v('tarih') || null, kisi_sayisi: sayi(v('kisi')), anlasma_tutari: sayi(v('tutar')), ic_not: v('not') || null });
-          await tazele(); O.bildir('Kaydedildi', 'ok');
-        } catch (er) { $('#bfh', ic).innerHTML = '<div class="hata-kutu">' + esc(O.hataMetni(er)) + '</div>'; }
+      f.elements.tarih.addEventListener('change', function () { var d = f.elements.tarih.value ? O.tarihNesne(f.elements.tarih.value) : null; f.elements.gun.value = d ? ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'][d.getDay()] : ''; });
+      f.addEventListener('submit', function (e) { e.preventDefault(); kaydet(null, 'Kaydedildi').catch(hataKutu); });
+      f.addEventListener('click', function (e) {
+        var b = e.target.closest('[data-d]'); if (!b) return;
+        var d = b.getAttribute('data-d');
+        if (d === '_ileri') {
+          var i = ILERLE.indexOf(S.k.durum), sonraki = i < 0 ? 'gorusme' : ILERLE[Math.min(i + 1, ILERLE.length - 1)];
+          if (sonraki === S.k.durum) { O.bildir('Kayıt zaten son aşamada', 'ok'); return; }
+          d = sonraki;
+        }
+        if (d === 'iptal' && !onay('Bu kayıt iptal edilsin mi? Kayıt silinmez, "İptal" durumuna alınır.')) return;
+        if (d === 'tamamlandi' && !onay('Hesap kapatılsın mı? Kayıt "Tamamlandı" durumuna alınır; kalan borç varsa görünmeye devam eder.')) return;
+        kaydet({ durum: d }, 'Durum: ' + (DURUM_AD[d] || d)).catch(hataKutu);
       });
+      $('#bOnizle', ic).addEventListener('click', function () { sozlesmeAc(false); });
+      $('#bSozlesme', ic).addEventListener('click', function () { sozlesmeAc(true); });
+    }
+
+    function formVeri() {
+      var f = $('#bf', ic), v = function (n) { return f.elements[n].value.trim(); };
+      return { ad: v('ad'), soyad: v('soyad'), cift_adi: v('cift_adi') || null, tc_no: v('tc_no') || null, telefon: v('telefon'), telefon2: v('telefon2') || null, is_telefonu: v('is_telefonu') || null,
+        eposta: v('eposta') || null, adres: v('adres') || null, org_turu: v('org_turu') || null, menu_id: v('menu_id') || null, dugun_tarihi: v('tarih') || null,
+        baslama_saati: v('baslama_saati') || null, bitis_saati: v('bitis_saati') || null, seans: v('seans') || null, kisi_sayisi: sayi(v('kisi')), salon_id: v('salon') || null,
+        salon_kirasi: sayi(v('salon_kirasi')), sozlesme_tarihi: v('sozlesme_tarihi') || null, ekstra_tutar: sayi(v('ekstra_tutar')), anlasma_tutari: sayi(v('tutar')),
+        sozlesme_notu: v('sozlesme_notu') || null, ic_not: v('not') || null, durum: v('durum') };
+    }
+    async function kaydet(ek, mesaj) {
+      var o = formVeri(); if (ek) Object.assign(o, ek);
+      if (o.ad.length < 1 || o.telefon.length < 5) throw new Error('Ad ve cep telefonu gerekli.');
+      await guncelle('cift_kayitlari', S.k.id, o);
+      await tazele(); if (mesaj) O.bildir(mesaj, 'ok');
+    }
+    async function sozlesmeAc(yaz) {
+      try {
+        await kaydet(null, '');
+        if (!S.sablon) { O.bildir('Sözleşme şablonu yok. Önce Supabase\'te supabase-villora-paket2.sql dosyasını çalıştırın.', 'hata'); return; }
+        if (!window.SOZLESME) { O.bildir('Sözleşme dosyası yüklenmedi. Sayfayı yenileyin.', 'hata'); return; }
+        var menu = D.menu.filter(function (m) { return m.id === S.k.menu_id; })[0] || null;
+        window.SOZLESME.ac({ mekan: M, sablon: S.sablon, kayit: S.k, menu: menu, kalemler: S.kalem, odemeler: S.odeme, salonAdi: salonAd(S.k.salon_id),
+          logo: O.guvenliUrl(M.logo_url) || (A && A.LOGO) || '' }, yaz);
+      } catch (er) { hataKutu(er); }
     }
 
     async function tazele() {
@@ -343,7 +422,7 @@
       S.kalem = await q(sb.from('teklif_kalemleri').select('*').eq('kayit_id', id).order('sira').order('kalem_ad'));
       S.silinecek = [];
       S.odeme = await q(sb.from('odemeler').select('*').eq('kayit_id', id).order('vade_tarihi', { ascending: true, nullsFirst: false }));
-      cizBilgi(); cizKalem(); cizOdeme();
+      cizOzet(); cizBilgi(); cizKalem(); cizOdeme();
     }
 
     /* b) Teklif kalemleri */
@@ -442,7 +521,7 @@
         }).join('') + '</ul>';
       }
       h += '<form id="of" class="satir-arac" novalidate><select name="tur" aria-label="Tür"><option value="kapora">Kapora</option><option value="taksit" selected>Taksit</option><option value="kalan">Kalan</option><option value="diger">Diğer</option></select>' +
-        '<input name="tutar" type="number" min="0.01" step="0.01" placeholder="Tutar (TL)" aria-label="Tutar"><input name="vade" type="date" aria-label="Vade tarihi">' +
+        '<input name="tutar" type="number" min="0.01" step="0.01" placeholder="Tutar (TL)" aria-label="Tutar"><input name="vade" type="date" aria-label="Tarih (vade ya da tahsilat tarihi)" title="Tarih (vade ya da tahsilat tarihi)">' +
         '<label class="onay-kucuk"><input type="checkbox" name="odendi"> Ödendi</label><button class="btn ana kucuk" type="submit">Ekle</button></form>' +
         (bekleyen > 0 ? '<p class="not">Bekleyen ödemeler toplamı: ' + esc(O.para(bekleyen)) + '</p>' : '');
       $('#d-odeme', ic).innerHTML = bolum('Kapora, taksit ve kalan borç', h, true);
@@ -452,7 +531,7 @@
         var f = e.target, t = sayi(f.tutar.value);
         if (!t || t <= 0) { O.bildir('Tutarı yazın', 'hata'); return; }
         try {
-          await ekle('odemeler', { kayit_id: id, tur: f.tur.value, tutar: t, vade_tarihi: f.vade.value || null, odendi: f.odendi.checked, odeme_tarihi: f.odendi.checked ? O.bugunISO() : null });
+          await ekle('odemeler', { kayit_id: id, tur: f.tur.value, tutar: t, vade_tarihi: f.vade.value || null, odendi: f.odendi.checked, odeme_tarihi: f.odendi.checked ? (f.vade.value || O.bugunISO()) : null });
           await tazele();
         } catch (er) { hata(er); }
       });
@@ -513,7 +592,7 @@
       });
     }
 
-    cizBilgi(); cizKalem(); cizOdeme(); cizHesap();
+    cizOzet(); cizBilgi(); cizKalem(); cizOdeme(); cizHesap();
   }
 
   /* ================= TAKVİM ================= */
@@ -577,7 +656,7 @@
 
   /* ================= İÇERİK ================= */
   var icerikAlt = 'fiyat';
-  var ALTLAR = [['fiyat', 'Fiyatlar'], ['menu', 'Menüler'], ['foto', 'Fotoğraflar'], ['video', 'Videolar'], ['makyaj', 'Make-up'], ['firma', 'Anlaşmalı firmalar'], ['ozellik', 'Mekan özellikleri'], ['salon', 'Salonlar']];
+  var ALTLAR = [['fiyat', 'Fiyatlar'], ['menu', 'Menüler'], ['foto', 'Fotoğraflar'], ['video', 'Videolar'], ['makyaj', 'Make-up'], ['firma', 'Anlaşmalı firmalar'], ['ozellik', 'Mekan özellikleri'], ['salon', 'Salonlar'], ['sozlesme', 'Sözleşme']];
   function icerikCiz() {
     aktifSayfa().innerHTML = '<div class="alt-sekme" role="tablist">' + ALTLAR.map(function (a) { return '<button role="tab" data-a="' + a[0] + '" aria-selected="' + (a[0] === icerikAlt) + '">' + a[1] + '</button>'; }).join('') + '</div><div id="altIc"></div>';
     $('.alt-sekme').addEventListener('click', function (e) {
@@ -593,8 +672,32 @@
     if (icerikAlt === 'fiyat') { kap.innerHTML = '<div id="kk"></div><div id="kl" style="margin-top:28px"></div>'; crud($('#kk'), CFG.kat); crud($('#kl'), CFG.kalem); }
     else if (icerikAlt === 'foto') fotoCiz(kap, 'galeri');
     else if (icerikAlt === 'makyaj') makyajCiz(kap);
+    else if (icerikAlt === 'sozlesme') sozlesmeCiz(kap);
     else crud(kap, CFG[icerikAlt]);
   }
+
+  /* ---- Sözleşme şablonu: firma bilgileri ve madde metni ---- */
+  async function sozlesmeCiz(kap) {
+    var r = await sb.from('sozlesme_sablonlari').select('*').eq('mekan_id', M.id).limit(1).maybeSingle();
+    if (r.error) { kap.innerHTML = '<div class="bos">Sözleşme şablonu okunamadı. Supabase\'te supabase-villora-paket2.sql dosyasını çalıştırdınız mı?</div>'; return; }
+    var sb0 = r.data;
+    if (!sb0) { kap.innerHTML = '<div class="bos">Sözleşme şablonu henüz yok. Supabase\'te supabase-villora-paket2.sql dosyasını çalıştırın.</div>'; return; }
+    kap.innerHTML = '<div class="crud-ust"><div><h2>Sözleşme</h2><p class="not" style="margin:4px 0 0">Sözleşme çıktısında kullanılan firma bilgileri ve maddeler. Satırın başına ## koyarsanız başlık olur. {{unvan}}, {{adres}} ve {{tel}} yazan yerler otomatik dolar. Çiftin adı, tarih, kişi sayısı, menü, hizmetler ve tutarlar sözleşmenin ilk sayfasına takip kaydından otomatik yazılır.</p></div></div>' +
+      '<form id="szf" novalidate><label class="alan"><span>Firma unvanı <em>(sözleşmede ve maddelerde görünür)</em></span><input name="unvan" value="' + esc(sb0.unvan || '') + '"></label>' +
+      '<label class="alan"><span>Adres</span><input name="adres" value="' + esc(sb0.adres || '') + '"></label>' +
+      '<div class="ikili"><label class="alan"><span>Telefon</span><input name="telefon" value="' + esc(sb0.telefon || '') + '"></label><label class="alan"><span>Üst başlık <em>(gri bant)</em></span><input name="ust_baslik" value="' + esc(sb0.ust_baslik || '') + '"></label></div>' +
+      '<label class="alan"><span>Sözleşme maddeleri</span><textarea name="icerik" rows="26" style="font-size:14px;line-height:1.45">' + esc(sb0.icerik || '') + '</textarea></label>' +
+      '<div id="szh"></div><button class="btn ana" type="submit">Kaydet</button></form>';
+    $('#szf', kap).addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var f = e.target;
+      try {
+        await guncelle('sozlesme_sablonlari', sb0.id, { unvan: f.unvan.value.trim() || null, adres: f.adres.value.trim() || null, telefon: f.telefon.value.trim() || null, ust_baslik: f.ust_baslik.value.trim() || null, icerik: f.icerik.value });
+        O.bildir('Sözleşme kaydedildi', 'ok');
+      } catch (er) { $('#szh', kap).innerHTML = '<div class="hata-kutu">' + esc(O.hataMetni(er)) + '</div>'; }
+    });
+  }
+
   async function yerelTazele() {
     D.salon = await q(sb.from('salonlar').select('*').eq('mekan_id', M.id).order('sira').order('id'));
     D.kat = await q(sb.from('fiyat_kategorileri').select('*').eq('mekan_id', M.id).order('sira').order('id'));
@@ -611,7 +714,7 @@
       alanlar: function () { return [{ k: 'ad', e: 'Hizmet adı', t: 'text', zor: true }, { k: 'kategori_id', e: 'Kategori', t: 'select', opt: [['', 'Kategorisiz']].concat(D.kat.map(function (c) { return [c.id, c.ad]; })) }, { k: 'aciklama', e: 'Kısa açıklama', t: 'textarea' },
         { k: 'fiyat', e: 'Fiyat (TL)', t: 'money', yardim: 'Boş bırakırsanız "Teklif alınız" yazar.' }, { k: 'birim', e: 'Fiyat türü', t: 'select', v: 'sabit', opt: [['sabit', 'Sabit ücret'], ['kisi_basi', 'Kişi başı'], ['adet', 'Adet başı']] }, SIRA, AKTIF]; },
       satir: function (r) { var c = D.kat.filter(function (x) { return x.id === r.kategori_id; })[0]; return [r.ad, (c ? c.ad + ' · ' : '') + (r.fiyat == null ? 'Teklif alınız' : O.para(r.fiyat) + (r.birim === 'kisi_basi' ? ' / kişi' : r.birim === 'adet' ? ' / adet' : ''))]; } },
-    menu: { tablo: 'menuler', baslik: 'Menüler', tek: 'menü', alanlar: [{ k: 'ad', e: 'Menü adı', t: 'text', zor: true, ornek: 'Kırmızı et menüsü' }, { k: 'aciklama', e: 'Kısa açıklama', t: 'textarea' }, { k: 'icerik', e: 'Menü içeriği (her satıra bir yemek)', t: 'textarea' }, { k: 'fiyat_kisi', e: 'Kişi başı fiyat (TL)', t: 'money' }, SIRA, AKTIF], satir: function (r) { return [r.ad, r.fiyat_kisi == null ? '' : O.para(r.fiyat_kisi) + ' / kişi']; } },
+    menu: { tablo: 'menuler', baslik: 'Menüler', tek: 'menü', alanlar: [{ k: 'ad', e: 'Menü adı', t: 'text', zor: true, ornek: 'Kırmızı et menüsü' }, { k: 'aciklama', e: 'Kısa açıklama', t: 'textarea' }, { k: 'icerik', e: 'Menü içeriği', t: 'textarea', satir: 14, yardim: 'Başlığı [köşeli parantez] içinde yazın, altına her satıra bir yemek yazın. Örnek: [Ana yemek] satırının altına Et kavurma.' }, { k: 'dahil_hizmetler', e: 'Dahil hizmetler (her satıra bir hizmet)', t: 'textarea', satir: 9 }, { k: 'not_metni', e: 'Menü notu (sitede ve sözleşmede görünür)', t: 'textarea', satir: 3 }, { k: 'fiyat_kisi', e: 'Kişi başı fiyat (TL)', t: 'money', yardim: 'Boş bırakırsanız fiyat sitede görünmez, sözleşme bedeline menü eklenmez.' }, SIRA, AKTIF], satir: function (r) { return [r.ad, r.fiyat_kisi == null ? '' : O.para(r.fiyat_kisi) + ' / kişi']; } },
     ozellik: { tablo: 'ozellikler', baslik: 'Mekan özellikleri', tek: 'özellik', alanlar: [{ k: 'baslik', e: 'Başlık', t: 'text', zor: true, ornek: 'Otopark' }, { k: 'aciklama', e: 'Açıklama', t: 'textarea' }, SIRA, AKTIF], satir: function (r) { return [r.baslik, r.aciklama || '']; } },
     firma: { tablo: 'anlasmali_firmalar', baslik: 'Anlaşmalı firmalar', tek: 'firma', aciklama: 'Çiftlere indirim sunan çiçekçi, fotoğrafçı, gelinlikçi vb. firmalar. Sitede kart olarak görünür; kaç kişinin tıkladığını burada izlersiniz.',
       alanlar: [{ k: 'ad', e: 'Firma adı', t: 'text', zor: true }, { k: 'kategori', e: 'Kategori', t: 'text', ornek: 'Çiçekçi' }, { k: 'aciklama', e: 'Kısa açıklama', t: 'textarea' }, { k: 'indirim_oran', e: 'İndirim oranı (%)', t: 'number', max: 100 }, { k: 'instagram', e: 'Instagram', t: 'text', ornek: '@kullaniciadi' }, { k: 'web', e: 'Web sitesi', t: 'url' }, { k: 'telefon', e: 'Telefon', t: 'text' }, SIRA, AKTIF],

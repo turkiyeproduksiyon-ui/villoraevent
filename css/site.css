@@ -363,17 +363,19 @@
 .alt-iletisim .tel-ik { display: inline-block; vertical-align: -3px; margin-right: 6px; }
 .islem.baglanti { text-decoration: none; display: flex; }
 
-/* Sekmeler kalktı: mekan ve mini uygulamalar tek sayfada alt alta (mobil ve masaüstü aynı mantık) */
-.sekme { display: none; }
-.bolme, .bolme.aktif { display: block; }
-/* Mobil: ana resimde gelin ve damat birlikte görünsün */
-@media (max-width: 959px) { .acilis > img { object-position: 78% 35%; } }
 
-/* Açılış: telefonda ekranın ortasında logo ve ad (en az 1 sn), bilgisayarda boş sayfa */
-.isleniyor.yukle { position: fixed; inset: 0; z-index: 5; display: grid; place-items: center; background: #fff; }
-.isleniyor.yukle .yukle-ic { display: grid; justify-items: center; gap: 14px; }
-.isleniyor.yukle img { width: 104px; height: auto; filter: brightness(.62) saturate(1.5) contrast(1.15); animation: yukleNefes 1.6s ease-in-out infinite; }
-.isleniyor.yukle b { font: 700 28px/1.1 var(--serif); letter-spacing: .01em; color: #3b1020; }
-@keyframes yukleNefes { 0%, 100% { opacity: .75; transform: scale(.97); } 50% { opacity: 1; transform: scale(1); } }
-@media (prefers-reduced-motion: reduce) { .isleniyor.yukle img { animation: none; } }
-@media (min-width: 960px) { .isleniyor.yukle .yukle-ic { visibility: hidden; } }
+/* ---- Paket 2: footer ve menüler ---- */
+.alt-ig { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 999px; background: rgba(255,255,255,.1); color: #fff; text-decoration: none; font-weight: 600; }
+.alt-ig:hover { background: var(--accent); }
+.menu-liste { display: grid; gap: 10px; }
+.menu-kart { border: 1px solid var(--line, #e3e1dc); border-radius: 12px; padding: 4px 16px 14px; background: var(--surface, #fff); }
+.menu-kart > summary { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; list-style: none; }
+.menu-kart > summary::-webkit-details-marker { display: none; }
+.menu-kart.acik { margin: 0 0 14px; padding-top: 10px; background: transparent; }
+.menu-fy { font-weight: 600; white-space: nowrap; }
+.menu-fy small { font-weight: 400; opacity: .7; }
+.menu-bolum { margin-top: 12px; }
+.menu-bolum h4 { margin: 0 0 4px; font-size: 15px; }
+.menu-bolum ul { margin: 0; padding-left: 18px; }
+.menu-bolum li { margin: 2px 0; }
+.menu-not { margin: 14px 0 0; font-size: 13px; opacity: .8; white-space: pre-line; }
