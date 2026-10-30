@@ -629,7 +629,6 @@
         D.menu.map(function (m) { return '<option value="' + esc(m.id) + '"' + (ek.menu === m.id ? ' selected' : '') + '>' + esc(m.ad) + (m.fiyat_kisi != null ? ' - ' + esc(O.para(m.fiyat_kisi)) + ' / kişi' : '') + '</option>'; }).join('') + '</select></label>';
     }
     h += '<div id="menuOnizle"></div>';
-    h += secimListesi(true);
     h += '<div class="ikili"><label class="alan"><span>Adınız</span><input name="ad" autocomplete="given-name" required></label>' +
       '<label class="alan"><span>Soyadınız</span><input name="soyad" autocomplete="family-name" required></label></div>';
     h += '<label class="alan"><span>Telefon</span><input name="tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="0532 123 45 67" required></label>';
@@ -663,7 +662,7 @@
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v('eposta'))) return hata(O.hataMetni({ message: 'eposta_gecersiz' }));
     if (!f.elements.kvkk.checked) return hata(O.hataMetni({ message: 'kvkk_onayi_gerekli' }));
     var kalemler = $$('input[name=kalem]:checked', f).map(function (i) { return i.value; });
-    if (tur === 'teklif' && (D.kalem.length || D.menu.length) && !kalemler.length && !v('menu')) return hata('Teklif için bir menü ya da en az bir ek seçenek seçin.');
+    if (tur === 'teklif' && D.menu.length && !v('menu')) return hata('Teklif için bir menü seçin.');
 
     var dugme = $('button[type=submit]', f); dugme.disabled = true; dugme.textContent = 'Gönderiliyor...';
     sb.rpc('talep_olustur', {
