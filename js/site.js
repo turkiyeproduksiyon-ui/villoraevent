@@ -19,10 +19,20 @@
       return;
     }
     sb = window.supabase.createClient(A.SUPABASE_URL, A.SUPABASE_KEY);
-    yukle().then(ciz).catch(function (e) {
+    function zamanli(p, ms) { return new Promise(function (ok, no) { var t = setTimeout(function () { no(new Error('zaman_asimi')); }, ms); p.then(function (v) { clearTimeout(t); ok(v); }, function (e) { clearTimeout(t); no(e); }); }); }
+    function dene(n) { return zamanli(yukle(), 10000).catch(function (e) { if (n > 0 && !(e && e.message === 'mekan_yok')) return dene(n - 1); throw e; }); }
+    dene(2).then(ciz).catch(function (e) {
       var m = e && e.message;
       if (m === 'mekan_yok') hataSayfasi('Mekan bulunamadı', 'Bu adres şu anda yayında değil.');
-      else hataSayfasi('Sayfa yüklenemedi', 'İnternet bağlantınızı kontrol edip sayfayı yenileyin.');
+      else {
+        hataSayfasi('Sayfa yüklenemedi', 'İnternet bağlantınızı kontrol edin.');
+        var kp = document.createElement('button'); kp.className = 'btn ana'; kp.type = 'button'; kp.style.marginTop = '16px'; kp.textContent = 'Yeniden dene';
+        kp.addEventListener('click', function () {
+          var biter = function () { location.reload(); };
+          try { Promise.all([(navigator.serviceWorker ? navigator.serviceWorker.getRegistrations().then(function (r) { return Promise.all(r.map(function (x) { return x.unregister(); })); }) : 0), (window.caches ? caches.keys().then(function (k) { return Promise.all(k.map(function (x) { return caches.delete(x); })); }) : 0)]).then(biter, biter); } catch (er) { biter(); }
+        });
+        var kt = $('#uygulama .isleniyor'); if (kt) kt.appendChild(kp);
+      }
       if (window.console) console.error(e);
     });
   }
@@ -334,7 +344,7 @@
     if ($('.sekme')) {
       var x0 = 0, y0 = 0, yok = false;
       var m = $('main');
-      m.addEventListener('touchstart', function (e) { var t0 = e.touches[0]; x0 = t0.clientX; y0 = t0.clientY; yok = !!e.target.closest('.galeri-seri, iframe, input'); }, { passive: true });
+      m.addEventListener('touchstart', function (e) { var t0 = e.touches[0]; x0 = t0.clientX; y0 = t0.clientY; yok = !!e.target.closest('.galeri-seri, .vt-seri, .cf-liste, iframe, input, textarea, select'); }, { passive: true });
       m.addEventListener('touchend', function (e) {
         if (yok) return;
         var t1 = e.changedTouches[0], dx = t1.clientX - x0, dy = t1.clientY - y0;
@@ -611,7 +621,8 @@
     h += '<p class="not" style="margin:0 0 16px">' + (teklifMi
       ? 'Tarihi, kişi sayınızı ve menünüzü seçin. ' + esc(M.ad) + ' size özel fiyatı hazırlayıp e-posta ya da WhatsApp ile iletir.'
       : 'Düğününüzle ilgili isteklerinizi yazın. ' + esc(M.ad) + ' size en kısa sürede dönüş yapar.') + '</p>';
-    h += '<div class="ikili"><label class="alan"><span>Düğün tarihi</span><input type="date" name="tarih" min="' + O.bugunISO() + '" value="' + esc(ek.tarih || '') + '" required></label>' +
+    h += '<label class="alan"><span>Organizasyon türü</span><select name="tur_org" required><option value="Düğün" selected>Düğün</option><option value="Nişan">Nişan</option><option value="Diğer organizasyon">Diğer organizasyon</option></select></label>';
+    h += '<div class="ikili"><label class="alan"><span id="tarihEtiket">Düğün tarihi</span><input type="date" name="tarih" min="' + O.bugunISO() + '" value="' + esc(ek.tarih || '') + '" required></label>' +
       '<label class="alan"><span>Kişi sayısı</span><input type="number" name="kisi" inputmode="numeric" min="1" max="5000" placeholder="300"></label></div>';
     if (D.salonlar.length > 1) {
       h += '<label class="alan"><span>Salon</span><select name="salon"><option value="">Fark etmez</option>' +
@@ -637,6 +648,9 @@
     var f = $('#tf', ic);
     $('.kvkk-link', ic).addEventListener('click', kvkkAc);
     var ms = f.elements.menu;
+    var to = f.elements.tur_org;
+    function turGuncelle() { var e = $('#tarihEtiket', ic); if (e) e.textContent = (to.value === 'Düğün' ? 'Düğün' : to.value === 'Nişan' ? 'Nişan' : 'Organizasyon') + ' tarihi'; }
+    if (to) to.addEventListener('change', turGuncelle);
     function menuOnizleCiz() { var m = D.menu.filter(function (x) { return x.id === ms.value; })[0]; $('#menuOnizle', ic).innerHTML = m ? '<div class="menu-kart acik">' + menuBlok(m) + '</div>' : ''; }
     if (ms && ms.value) menuOnizleCiz();
     if (ms) ms.addEventListener('change', function () {
@@ -651,7 +665,8 @@
     var kutu = $('#tfHata', ic);
     function hata(m) { kutu.innerHTML = '<div class="hata-kutu" role="alert">' + esc(m) + '</div>'; kutu.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
     var tel = v('tel').replace(/\D/g, '');
-    if (!v('tarih')) return hata('Düğün tarihini seçin.');
+    if (!v('tur_org')) return hata('Organizasyon türünü seçin.');
+    if (!v('tarih')) return hata('Tarihi seçin.');
     if (v('tarih') < O.bugunISO()) return hata(O.hataMetni({ message: 'tarih_gecersiz' }));
     if (v('ad').length < 2 || v('soyad').length < 2) return hata(O.hataMetni({ message: 'ad_soyad_gerekli' }));
     if (tel.length < 10 || tel.length > 13) return hata(O.hataMetni({ message: 'telefon_gecersiz' }));
@@ -664,13 +679,13 @@
     sb.rpc('talep_olustur', {
       p_slug: A.MEKAN_SLUG, p_tur: tur, p_ad: v('ad'), p_soyad: v('soyad'), p_telefon: v('tel'), p_eposta: v('eposta'),
       p_dugun_tarihi: v('tarih'), p_kvkk: true, p_kisi_sayisi: v('kisi') ? parseInt(v('kisi'), 10) : null,
-      p_salon_id: v('salon') || null, p_menu_id: v('menu') || null, p_not: v('not'), p_kalemler: kalemler
+      p_salon_id: v('salon') || null, p_menu_id: v('menu') || null, p_not: ('Organizasyon türü: ' + v('tur_org') + (v('not') ? '\n' + v('not') : '')), p_kalemler: kalemler
     }).then(function (r) {
       if (r.error) {
         dugme.disabled = false; dugme.textContent = tur === 'teklif' ? 'Teklif iste' : 'Talebi gönder';
         return hata(O.hataMetni(r.error));
       }
-      var wa = O.waLink(M.whatsapp || M.telefon, 'Merhaba, ' + O.tarihTR(v('tarih')) + ' tarihli düğünümüz için ' + (tur === 'teklif' ? 'teklif' : 'talep') + ' gönderdim. Adım: ' + v('ad') + ' ' + v('soyad'));
+      var wa = O.waLink(M.whatsapp || M.telefon, 'Merhaba, ' + O.tarihTR(v('tarih')) + ' tarihli ' + v('tur_org').toLowerCase() + ' için ' + (tur === 'teklif' ? 'teklif' : 'talep') + ' gönderdim. Adım: ' + v('ad') + ' ' + v('soyad'));
       ic.innerHTML = '<div class="ok-kutu" role="status"><b style="display:block;font-size:18px;margin-bottom:4px">' + (tur === 'teklif' ? 'Teklif talebiniz alındı' : 'Talebiniz alındı') + '</b>' +
         esc(M.ad) + ' en kısa sürede ' + esc(v('eposta')) + ' adresinize ya da telefonunuza dönüş yapacak.</div>' +
         '<div style="display:grid;gap:10px;margin-top:16px">' + (wa ? '<a class="btn hafif tam" target="_blank" rel="noopener" href="' + esc(wa) + '">' + ik('whatsapp', 20) + 'WhatsApp\'tan da yazın</a>' : '') +

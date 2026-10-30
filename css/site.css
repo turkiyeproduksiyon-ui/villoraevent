@@ -548,3 +548,8 @@
 
 /* Banner: pembe gölge hafif, fotoğraf net görünsün */
 .acilis::after { background: linear-gradient(to top, rgba(120, 12, 55, .62) 0%, rgba(120, 12, 55, .12) 32%, rgba(120, 12, 55, 0) 50%); }
+
+/* v38: Çiftlerimiz üst boşluk, mobil hero ortalama */
+.vt-ciftler { padding-top: 34px; }
+.vt-band + .vt-ciftler { padding-top: 34px; }
+@media (max-width: 700px) { .acilis > img { object-position: 80% 40%; } }
