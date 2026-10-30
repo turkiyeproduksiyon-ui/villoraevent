@@ -542,3 +542,9 @@
 .menu-secili { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
 .menu-secili span { color: var(--accent); font-weight: 600; }
 .vt-ciftler .cf-liste { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+
+.vt-ciftler .vt-cift-dugme { margin-top: 28px; }
+.vt-ciftler .vt-baslik { margin-bottom: 8px; }
+
+/* Banner: pembe gölge hafif, fotoğraf net görünsün */
+.acilis::after { background: linear-gradient(to top, rgba(120, 12, 55, .62) 0%, rgba(120, 12, 55, .12) 32%, rgba(120, 12, 55, 0) 50%); }

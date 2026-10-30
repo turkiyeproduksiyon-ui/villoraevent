@@ -163,15 +163,14 @@
     }
 
     if (acik('ciftlerimiz')) {
-      var cfL = (D.ciftler || []).slice(0, 3), cfIg = O.sosyalUrl('instagram', M.instagram);
+      var cfL = (D.ciftler || []).slice(0, 3);
       h += '<section class="vt vt-ciftler"><div class="vt-kap"><div class="vt-baslik"><h2>Çiftlerimiz</h2><p>' + esc(M.ad) + ' ile evlenen çiftlerin fotoğrafları ve yorumları.</p></div>' +
         (cfL.length ? '<div class="cf-liste">' + cfL.map(function (c) {
           var u = O.guvenliUrl(c.foto_url);
           return '<article class="cf-kart">' + (u ? '<img loading="lazy" src="' + esc(u) + '" alt="' + esc(c.ad) + '">' : '<div class="cf-fotosuz">' + ik('yildiz', 28) + '</div>') +
             '<div class="cf-ic"><small>' + esc(c.kategori || 'Düğün') + '</small><b>' + esc(c.ad) + '</b>' + (c.yorum ? '<blockquote>' + esc(c.yorum) + '</blockquote>' : '') + '</div></article>';
         }).join('') + '</div>' : '') +
-        '<div class="vt-band-dugme" style="margin-top:18px"><button type="button" class="btn ana" data-islem="ciftler">' + (cfL.length ? 'Tüm çiftlerimiz' : 'Çiftlerimiz') + '</button>' +
-        (cfIg ? '<a class="btn cizgi" href="' + esc(cfIg) + '" target="_blank" rel="noopener">' + ik('instagram', 18) + 'Instagram sayfamız</a>' : '') + '</div></div></section>';
+        '<div class="vt-cift-dugme"><button type="button" class="btn ana" data-islem="ciftler">' + (cfL.length ? 'Tüm çiftlerimiz' : 'Çiftlerimizi görün') + '</button></div></div></section>';
     }
 
     var EK = [];
@@ -189,7 +188,8 @@
     h += '<section class="vt vt-iletisim" id="iletisimK"><div class="vt-kap vt-il-izgara"><div><h2>Bize ulaşın</h2>' + (M.adres ? '<p class="vt-adres">' + esc(M.adres) + '</p>' : '') +
       '<div class="vt-il-dugme">' + (wa ? '<a class="btn ana" href="' + esc(wa) + '" target="_blank" rel="noopener">' + ik('whatsapp', 20) + 'WhatsApp</a>' : '') +
       (tel ? '<a class="btn cizgi" href="tel:' + esc(tel) + '">' + ik('telefon', 20) + esc(M.telefon) + '</a>' : '') +
-      (harita ? '<a class="btn cizgi" href="' + esc(harita) + '" target="_blank" rel="noopener">' + ik('konum', 20) + 'Yol tarifi</a>' : '') + '</div></div>' +
+      (harita ? '<a class="btn cizgi" href="' + esc(harita) + '" target="_blank" rel="noopener">' + ik('konum', 20) + 'Yol tarifi</a>' : '') +
+      (O.sosyalUrl('instagram', M.instagram) ? '<a class="btn cizgi" href="' + esc(O.sosyalUrl('instagram', M.instagram)) + '" target="_blank" rel="noopener">' + ik('instagram', 20) + 'Instagram sayfamız</a>' : '') + '</div></div>' +
       '<div class="vt-harita">' + haritaHtml(harita) + '</div></div></section>';
 
     /* Hakkımızda bandı: yazı panelden (hakkinda) ya da config.js'ten gelir */
@@ -527,9 +527,7 @@
         (m.fiyat_kisi != null ? '<span class="menu-fy">' + esc(O.para(m.fiyat_kisi)) + ' <small>kişi başı</small></span>' : '') + '</summary>' +
         (m.aciklama ? '<p class="not" style="margin:8px 0 0">' + esc(m.aciklama) + '</p>' : '') + menuBlok(m) + '</details>';
     });
-    var icm = pencere(secili.length ? secili[0].ad : 'Menüler', h + '</div>' + (secili.length ? '<button type="button" class="btn ana tam" id="menuTeklif" style="margin-top:14px">Bu menüden teklif al</button>' : ''));
-    var mt = icm && icm.querySelector('#menuTeklif');
-    if (mt) mt.addEventListener('click', function () { kapatPencere(); islemCalistir('teklif', { menu: secili[0].id }); });
+    pencere(secili.length ? secili[0].ad : 'Menüler', h + '</div>');
   }
 
   function ciftlerAc() {
@@ -537,8 +535,6 @@
     liste.forEach(function (c) { var k = c.kategori || 'Düğün'; if (kat.indexOf(k) < 0) kat.push(k); });
     var h = '<div class="cf-chip" role="tablist" aria-label="Kategori"><button type="button" class="ak" data-k="">Tümü</button>' + kat.map(function (k) { return '<button type="button" data-k="' + esc(k) + '">' + esc(k) + '</button>'; }).join('') + '</div><div class="cf-liste" id="cfListe"></div>' +
       '<div class="cf-alt"><b>Siz de yorumunuzu yazın</b><p class="not" style="margin:4px 0 12px">' + esc(M.ad) + ' ile anlaşan çiftler, size verilen şifreyle giriş yapıp yorumlarını yazabilir.</p>' + (acik('cift_ozel') ? '<button type="button" class="btn ana" id="cfYorumGit">Şifremle giriş yap</button>' : '') + '</div>';
-    var cfIg2 = O.sosyalUrl('instagram', M.instagram);
-    if (cfIg2) h += '<div class="cf-alt"><a class="btn cizgi" href="' + esc(cfIg2) + '" target="_blank" rel="noopener">' + ik('instagram', 18) + 'Instagram sayfamızı görün</a></div>';
     var ic = pencere('Çiftlerimiz', h);
     function ciz(k) {
       if (!liste.length) { $('#cfListe', ic).innerHTML = '<div class="bos">Çiftlerimizin fotoğrafları ve yorumları yakında burada olacak.</div>'; return; }

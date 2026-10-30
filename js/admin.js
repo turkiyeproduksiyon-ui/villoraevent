@@ -832,14 +832,14 @@
         c.width = Math.max(1, Math.round(img.width * s)); c.height = Math.max(1, Math.round(img.height * s));
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
         var tur = dosya.type === 'image/png' ? 'image/png' : 'image/jpeg';
-        c.toBlob(function (b) { URL.revokeObjectURL(u); b ? coz({ blob: b, tur: tur }) : red(new Error('Görsel işlenemedi')); }, tur, 0.82);
+        c.toBlob(function (b) { URL.revokeObjectURL(u); b ? coz({ blob: b, tur: tur }) : red(new Error('Görsel işlenemedi')); }, tur, 0.9);
       };
       img.onerror = function () { URL.revokeObjectURL(u); red(new Error('Bu dosya görsel olarak açılamadı')); };
       img.src = u;
     });
   }
   async function gorselYukle(dosya, enBuyuk) {
-    var k = await kucult(dosya, enBuyuk || 1800);
+    var k = await kucult(dosya, enBuyuk || 2400);
     if (k.blob.size > 5 * 1024 * 1024) throw new Error('Görsel 5 MB sınırını aşıyor');
     var yol = M.id + '/' + uuid() + (k.tur === 'image/png' ? '.png' : '.jpg');
     var r = await sb.storage.from('mekan-gorselleri').upload(yol, k.blob, { contentType: k.tur, upsert: false });
