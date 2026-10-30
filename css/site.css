@@ -538,3 +538,7 @@
 .dg2-tuval.cift::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: rgba(255, 255, 255, .85); box-shadow: 0 0 6px rgba(0, 0, 0, .35); pointer-events: none; z-index: 4; }
 .dg-mini.cift { width: 56px; }
 .dg2-sb .dg-mini.cift { width: 52px; }
+
+.menu-secili { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.menu-secili span { color: var(--accent); font-weight: 600; }
+.vt-ciftler .cf-liste { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
