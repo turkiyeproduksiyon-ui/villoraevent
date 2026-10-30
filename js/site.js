@@ -39,6 +39,10 @@
       s('fiyat_kalemleri'), s('menuler'), s('ozellikler'), s('anlasmali_firmalar'), s('makyaj_hizmetleri')]);
     x.slice(0, 8).forEach(function (q) { if (q.error) throw q.error; });
     D.salonlar = x[0].data || []; D.foto = x[1].data || []; D.video = x[2].data || []; D.kat = x[3].data || [];
+    try {
+      var cy = await sb.from('cift_yorumlari').select('*').eq('mekan_id', M.id).eq('durum', 'yayinda').order('sira', { ascending: true }).order('olusturma', { ascending: false });
+      D.ciftler = (cy && !cy.error && cy.data) || [];
+    } catch (e) { D.ciftler = []; }
     D.kalem = x[4].data || []; D.menu = x[5].data || []; D.ozellik = x[6].data || []; D.firma = x[7].data || []; D.makyaj = (x[8] && !x[8].error && x[8].data) || [];
   }
 
@@ -60,7 +64,7 @@
 
     var videolar = acik('shorts') ? D.video.filter(function (v) { return v.bolum === 'shorts'; }) : [];
     var ozelAcik = acik('cift_ozel');
-    var yak = acik('yakinda');                       // "Yakında" kutuları gösterilsin mi
+    var yak = false;                       // "Yakında" kutuları gösterilsin mi
     var klipler = [];                                // Kliplerimiz kaldırıldı (videolar Shorts'ta)
     var makyajFoto = D.foto.filter(function (f) { return f.tur === 'makyaj'; });
     var makyajVideo = D.video.filter(function (v) { return v.bolum === 'makyaj'; });
@@ -68,7 +72,7 @@
     var imajAd = encodeURIComponent(M.ad);
     var imajFiligran = !!(M.bolumler && M.bolumler.imaj_ad === true);
     var fotoImajAcik = acik('foto_imaj'), moviImajAcik = acik('movi_imaj');
-    var ikinci = ozelAcik || yak || fotoImajAcik || moviImajAcik;
+    var ikinci = ozelAcik || acik('foto_dergi') || fotoImajAcik || moviImajAcik;
 
     var h = '';
     h += '<header class="ust"><a class="marka" href="./">' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + '<span>' + esc(M.ad) + '</span></a><!--NAV-->' +
@@ -85,7 +89,8 @@
       '<div class="acilis-ic"><h1>' + esc(M.ana_baslik || M.ad) + '</h1>' +
       (M.ana_yazi ? '<p>' + esc(M.ana_yazi) + '</p>' : '') +
       '<div class="satir"><button class="btn ana" data-islem="teklif">Teklif al</button>' +
-      (D.kalem.length || D.menu.length ? '<button class="btn cizgi" data-islem="' + (D.kalem.length ? 'fiyatlar' : 'menu') + '">' + (D.kalem.length ? 'Fiyatları gör' : 'Menüleri gör') + '</button>' : '') +
+      (D.menu.length && acik('menu') ? '<button class="btn cizgi" data-ankraj="menulerK">Menüleri gör</button>' : '') +
+      (acik('foto_dergi') ? '<button class="btn cizgi" data-islem="dergi">Foto Dergi</button>' : '') +
       '</div></div></div>';
 
     if (acik('tarih_sorgu')) {
@@ -132,31 +137,52 @@
     }
     ISLEMLER = T.concat(K).filter(function (x) { return x.on && !x.yak; });
     if (galeri.length && acik('galeri')) ISLEMLER.unshift({ k: 'galeri', ad: 'Galeri', i: 'galeri', on: true });
+    if (acik('foto_dergi')) ISLEMLER.push({ k: 'dergi', ad: 'Foto Dergi', i: 'galeri', on: true });
+    if (D.ciftler && D.ciftler.length && acik('ciftlerimiz')) ISLEMLER.push({ k: 'ciftler', ad: 'Çiftlerimiz', i: 'yildiz', on: true });
 
-    var kutular = T.map(function (x) { return kutuHtml(x, false); }).join('');
-    var kucukler = K.map(function (x) { return kutuHtml(x, true); }).join('');
-    var serit = '';
-    if (yak) serit += '<button type="button" class="islem yok mini serit-soz" disabled aria-disabled="true"><b>Sözleşme</b><small>Yakında</small></button>';
-    if (M.erken_rez_aktif && M.erken_rez_oran > 0) {
-      serit += '<button type="button" class="erken-kutu" data-islem="teklif"><b>Erken rezervasyon</b><span>%' + esc(M.erken_rez_oran) + ' indirim · en az ' + esc(M.erken_rez_ay) + ' ay önce</span></button>';
+    /* ---- Yeni düzen: menü kartları, teklif bandı, ek hizmetler, iletişim ---- */
+    function bolumAdi(t) { return String(t || '').replace(/\s*\(.*\)\s*$/, '').trim(); }
+    if (D.menu.length && acik('menu')) {
+      h += '<section class="vt vt-menuler" id="menulerK"><div class="vt-kap"><div class="vt-baslik"><h2>Menülerimiz</h2><p>Size uygun menüyü seçin. Her menünün içeriği ve dahil hizmetleri kartın içinde.</p></div><div class="vt-seri">';
+      D.menu.forEach(function (m, i) {
+        var bl = O.menuAyir ? O.menuAyir(m.icerik) : [], hz = O.satirlar ? O.satirlar(m.dahil_hizmetler) : [];
+        var etiket = bl.map(function (x) { return bolumAdi(x.baslik); }).filter(Boolean);
+        h += '<article class="vt-kart"><div class="vt-kart-ust"><span class="vt-no">' + (/^men[uü]\s*\d+/i.test(m.ad) ? esc(m.ad.replace(/^men[uü]\s*/i, '')) : (i + 1)) + '</span><h3>' + esc(m.ad) + '</h3></div>' +
+          '<div class="vt-kart-ic">' +
+          (etiket.length ? '<ul class="vt-etiket">' + etiket.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' : '') +
+          (hz.length ? '<p class="vt-dahil"><b>' + hz.length + '</b> hizmet menüye dahil</p>' : '') +
+          '<div class="vt-kart-dugme"><button type="button" class="btn cizgi" data-menu="' + esc(m.id) + '">İncele</button><button type="button" class="btn ana" data-menusec="' + esc(m.id) + '">Teklif al</button></div></div></article>';
+      });
+      h += '</div></div></section>';
     }
 
-    h += '<div class="iki-kol"><div class="kisim k-islem"><h2>İncele, fiyat gör, teklif al</h2>' +
-      '<div class="kutular">' + kutular + '</div>' +
-      (kucukler ? '<div class="kutular dort kucuk-sira">' + kucukler + '</div>' : '') +
-      (serit ? '<div class="serit">' + serit + '</div>' : '') + '</div>';
+    if (acik('teklif')) {
+      h += '<section class="vt vt-band"><div class="vt-kap vt-band-ic"><div><h2>Hayalinizdeki günü birlikte planlayalım</h2><p>Organizasyon türünü, kişi sayısını ve menünüzü seçin. Size özel teklifi hazırlayıp iletelim.' +
+        (M.erken_rez_aktif && M.erken_rez_oran > 0 ? ' Erken rezervasyonda %' + esc(M.erken_rez_oran) + ' indirim, en az ' + esc(M.erken_rez_ay) + ' ay önce.' : '') + '</p></div>' +
+        '<div class="vt-band-dugme"><button type="button" class="btn ana" data-islem="teklif">Teklif al</button>' + (wa ? '<a class="btn cizgi" href="' + esc(wa) + '" target="_blank" rel="noopener">WhatsApp</a>' : '') + '</div></div></section>';
+    }
 
-    h += '<div class="kisim k-iletisim" id="iletisimK"><h2>Bize ulaşın</h2><div class="iletisim">' +
-      (wa ? '<a href="' + esc(wa) + '" target="_blank" rel="noopener">' + ik('whatsapp', 26) + 'WhatsApp</a>' : '') +
-      (tel ? '<a href="tel:' + esc(tel) + '">' + ik('telefon', 26) + 'Ara</a>' : '') +
-      (harita ? '<a href="' + esc(harita) + '" target="_blank" rel="noopener">' + ik('konum', 26) + 'Konum</a>' : '') +
-      '</div>' + (M.adres ? '<p class="adres">' + esc(M.adres) + '</p>' : '') + haritaHtml(harita) + '</div></div>';
+    var EK = [];
+    if (makyajVar && acik('makeup')) EK.push({ k: 'makyaj', ad: M.makyaj_baslik || 'Make-up', i: 'makyaj', y: 'Gelin makyajı ve saç tasarımı seçenekleri.' });
+    if (acik('firmalar')) EK.push({ k: 'firmalar', ad: 'Anlaşmalı firmalar', i: 'el', y: 'Gelin arabası, çiçekçi, fotoğrafçı, gelinlikçi, bando ve catering. Çiftlerimize özel indirimler.' });
+    if (D.ciftler && D.ciftler.length && acik('ciftlerimiz')) EK.unshift({ k: 'ciftler', ad: 'Çiftlerimiz', i: 'yildiz', y: 'Bizimle evlenen çiftlerin fotoğrafları ve yorumları.' });
+    if (acik('foto_dergi')) EK.push({ k: 'dergi', ad: 'Foto Dergi', i: 'galeri', y: 'Fotoğraflarınızı seçin, anı dergisini PDF olarak indirin. Yüklenmez, cihazınızda hazırlanır.' });
+    if (acik('ozellikler') && D.ozellik.length) EK.push({ k: 'ozellikler', ad: 'Mekan özellikleri', i: 'yildiz', y: 'Mekanın imkanları ve sunduğu olanaklar.' });
+    if (EK.length) {
+      h += '<section class="vt vt-ek"><div class="vt-kap"><div class="vt-baslik"><h2>Düğününüzü tamamlayan hizmetler</h2></div><div class="vt-ek-izgara">';
+      EK.forEach(function (x) { h += '<button type="button" class="vt-ek-kart" data-islem="' + x.k + '">' + ik(x.i, 28) + '<b>' + esc(x.ad) + '</b><span>' + esc(x.y) + '</span><em>İncele</em></button>'; });
+      h += '</div></div></section>';
+    }
+
+    h += '<section class="vt vt-iletisim" id="iletisimK"><div class="vt-kap vt-il-izgara"><div><h2>Bize ulaşın</h2>' + (M.adres ? '<p class="vt-adres">' + esc(M.adres) + '</p>' : '') +
+      '<div class="vt-il-dugme">' + (wa ? '<a class="btn ana" href="' + esc(wa) + '" target="_blank" rel="noopener">' + ik('whatsapp', 20) + 'WhatsApp</a>' : '') +
+      (tel ? '<a class="btn cizgi" href="tel:' + esc(tel) + '">' + ik('telefon', 20) + esc(M.telefon) + '</a>' : '') +
+      (harita ? '<a class="btn cizgi" href="' + esc(harita) + '" target="_blank" rel="noopener">' + ik('konum', 20) + 'Yol tarifi</a>' : '') + '</div></div>' +
+      '<div class="vt-harita">' + haritaHtml(harita) + '</div></div></section>';
 
     /* Hakkımızda bandı: yazı panelden (hakkinda) ya da config.js'ten gelir */
     if (acik('hakkimizda') && M.hakkinda) {
-      var hkFoto = O.guvenliUrl((galeri[2] || galeri[0] || {}).url || heroFoto);
-      h += '<section class="hakkimizda" id="hakkimizdaK">' + (hkFoto ? '<img src="' + esc(hkFoto) + '" alt="" loading="lazy">' : '') +
-        '<div class="hk-ic"><h2>Hakkımızda</h2>' + (AY0.ETIKET ? '<p class="hk-etiket">' + esc(AY0.ETIKET) + '</p>' : '') +
+      h += '<section class="hakkimizda" id="hakkimizdaK"><div class="hk-ic"><h2>Hakkımızda</h2>' +
         String(M.hakkinda).split(/\n{2,}/).map(function (p) { return '<p>' + esc(p.trim()).replace(/\n/g, '<br>') + '</p>'; }).join('') + '</div></section>';
     }
 
@@ -169,7 +195,7 @@
       var imajQ = imajFiligran ? '?ad=' + imajAd : '';
       if (moviImajAcik) mini += '<a class="islem mini baglanti" href="movi-imaj.html' + imajQ + '"><b>Movi İmaj</b></a>';
       if (fotoImajAcik) mini += '<a class="islem mini baglanti" href="foto-imaj.html' + imajQ + '"><b>Foto İmaj</b></a>';
-      if (yak) mini += '<button type="button" class="islem yok mini" disabled aria-disabled="true"><b>Foto Dergi</b><small>Yakında</small></button>';
+      if (acik('foto_dergi')) mini += '<button type="button" class="islem mini" data-islem="dergi"><b>Foto Dergi</b></button>';
       if (ozelAcik) mini += '<button type="button" class="islem mini" data-ankraj="ozelK"><b>Foto ve video indir</b></button>';
       if (mini) h += '<div class="kisim k-mini"><h2>Mini uygulamalarımız</h2><div class="kutular dort kucuk-sira">' + mini + '</div></div>';
       if (ozelAcik) {
@@ -198,6 +224,7 @@
     var igMetin = String(M.instagram || ((window.AYAR && window.AYAR.VARSAYILAN) || {}).instagram || '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/[\/?].*$/, '').replace(/^@/, '');
     h += '<footer class="alt-bilgi"><div class="alt-ic">' +
       '<div class="alt-marka"><b>' + esc(M.ad) + '</b></div>' +
+      (fl ? '<div class="alt-link">' + fl + '</div>' : '') +
       (igUrl ? '<a class="alt-ig" href="' + esc(igUrl) + '" target="_blank" rel="noopener">' + ik('instagram', 20) + '<span>' + (igMetin ? '@' + esc(igMetin) : 'Instagram') + '</span></a>' : '') +
       ((tel || M.adres) ? '<p class="alt-iletisim">' + (tel ? '<a href="tel:' + esc(tel) + '"><span class="tel-ik">' + ik('telefon', 18) + '</span>' + esc(M.telefon) + '</a>' : '') + (tel && M.adres ? '<br>' : '') + (M.adres ? esc(M.adres) : '') + '</p>' : '') +
       '<div class="alt-alt"><span>© ' + new Date().getFullYear() + ' ' + esc(M.ad) + '</span>' +
@@ -236,7 +263,7 @@
   /* ---------- Olaylar ---------- */
   function islemCalistir(k, ek) {
     ({ fiyatlar: fiyatlarAc, teklif: function () { formAc('teklif', ek); }, talep: function () { formAc('teklif', ek); },
-      firmalar: firmalarAc, menu: menuAc, ozellikler: ozelliklerAc, galeri: galeriAc, makyaj: makyajAc })[k]();
+      firmalar: firmalarAc, dergi: dergiAc, ciftler: ciftlerAc, menu: menuAc, ozellikler: ozelliklerAc, galeri: galeriAc, makyaj: makyajAc })[k]();
   }
 
   function sekmeAc(i) {
@@ -247,6 +274,10 @@
 
   function bagla() {
     document.addEventListener('click', function (e) {
+      var ms = e.target.closest('[data-menusec]');
+      if (ms) { islemCalistir('teklif', { menu: ms.getAttribute('data-menusec') }); return; }
+      var mi = e.target.closest('[data-menu]');
+      if (mi) { menuAc(mi.getAttribute('data-menu')); return; }
       var b = e.target.closest('[data-islem]');
       if (b) { islemCalistir(b.getAttribute('data-islem')); return; }
       var an = e.target.closest('[data-ankraj]');
@@ -476,15 +507,46 @@
     return h;
   }
 
-  function menuAc() {
+  function menuAc(acikId) {
     if (!D.menu.length) { pencere('Menü', '<div class="bos">Menü yakında burada olacak.</div>'); return; }
     var h = '<div class="menu-liste">';
     D.menu.forEach(function (m, i) {
-      h += '<details class="menu-kart"' + (D.menu.length === 1 ? ' open' : '') + '><summary><b>' + esc(m.ad) + '</b>' +
+      h += '<details class="menu-kart"' + (D.menu.length === 1 || m.id === acikId ? ' open' : '') + '><summary><b>' + esc(m.ad) + '</b>' +
         (m.fiyat_kisi != null ? '<span class="menu-fy">' + esc(O.para(m.fiyat_kisi)) + ' <small>kişi başı</small></span>' : '') + '</summary>' +
         (m.aciklama ? '<p class="not" style="margin:8px 0 0">' + esc(m.aciklama) + '</p>' : '') + menuBlok(m) + '</details>';
     });
     pencere('Menüler', h + '</div>');
+  }
+
+  function ciftlerAc() {
+    var liste = D.ciftler || [], kat = [];
+    liste.forEach(function (c) { var k = c.kategori || 'Düğün'; if (kat.indexOf(k) < 0) kat.push(k); });
+    var h = '<div class="cf-chip" role="tablist" aria-label="Kategori"><button type="button" class="ak" data-k="">Tümü</button>' + kat.map(function (k) { return '<button type="button" data-k="' + esc(k) + '">' + esc(k) + '</button>'; }).join('') + '</div><div class="cf-liste" id="cfListe"></div>' +
+      '<div class="cf-alt"><b>Siz de yorumunuzu yazın</b><p class="not" style="margin:4px 0 12px">' + esc(M.ad) + ' ile anlaşan çiftler, size verilen şifreyle giriş yapıp yorumlarını yazabilir.</p>' + (acik('cift_ozel') ? '<button type="button" class="btn ana" id="cfYorumGit">Şifremle giriş yap</button>' : '') + '</div>';
+    var ic = pencere('Çiftlerimiz', h);
+    function ciz(k) {
+      $('#cfListe', ic).innerHTML = liste.filter(function (c) { return !k || (c.kategori || 'Düğün') === k; }).map(function (c) {
+        var u = O.guvenliUrl(c.foto_url);
+        return '<article class="cf-kart">' + (u ? '<img loading="lazy" src="' + esc(u) + '" alt="' + esc(c.ad) + '">' : '<div class="cf-fotosuz">' + ik('yildiz', 28) + '</div>') +
+          '<div class="cf-ic"><small>' + esc(c.kategori || 'Düğün') + '</small><b>' + esc(c.ad) + '</b>' + (c.yorum ? '<blockquote>' + esc(c.yorum) + '</blockquote>' : '') + '</div></article>';
+      }).join('');
+    }
+    ciz('');
+    $('.cf-chip', ic).addEventListener('click', function (e) {
+      var b = e.target.closest('[data-k]'); if (!b) return;
+      $$('.cf-chip button', ic).forEach(function (x) { x.classList.toggle('ak', x === b); }); ciz(b.getAttribute('data-k'));
+    });
+    var g = $('#cfYorumGit', ic);
+    if (g) g.addEventListener('click', function () {
+      kapatPencere(); var hd = document.getElementById('ozelK');
+      if (hd) { var pn = hd.closest('.bolme'); if (pn && !pn.classList.contains('aktif') && !window.matchMedia('(min-width: 960px)').matches) sekmeAc(+pn.id.slice(1)); hd.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    });
+  }
+
+  function dergiAc() {
+    if (!window.DERGI) { pencere('Foto Dergi', '<div class="bos">Foto Dergi yüklenemedi. Sayfayı yenileyin.</div>'); return; }
+    var ig = String(M.instagram || '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/[\/?].*$/, '').replace(/^@/, '');
+    window.DERGI.ac({ pencere: pencere, mekan: M, ik: ik, instagram: ig ? '@' + ig : '' });
   }
 
   function ozelliklerAc() {
@@ -545,7 +607,7 @@
     }
     if (D.menu.length && acik('menu')) {
       h += '<label class="alan"><span>Menü</span><select name="menu"><option value="">Henüz seçmedim</option>' +
-        D.menu.map(function (m) { return '<option value="' + esc(m.id) + '">' + esc(m.ad) + (m.fiyat_kisi != null ? ' - ' + esc(O.para(m.fiyat_kisi)) + ' / kişi' : '') + '</option>'; }).join('') + '</select></label>';
+        D.menu.map(function (m) { return '<option value="' + esc(m.id) + '"' + (ek.menu === m.id ? ' selected' : '') + '>' + esc(m.ad) + (m.fiyat_kisi != null ? ' - ' + esc(O.para(m.fiyat_kisi)) + ' / kişi' : '') + '</option>'; }).join('') + '</select></label>';
     }
     h += '<div id="menuOnizle"></div>';
     h += secimListesi(true);
@@ -561,6 +623,8 @@
     var f = $('#tf', ic);
     $('.kvkk-link', ic).addEventListener('click', kvkkAc);
     var ms = f.elements.menu;
+    function menuOnizleCiz() { var m = D.menu.filter(function (x) { return x.id === ms.value; })[0]; $('#menuOnizle', ic).innerHTML = m ? '<div class="menu-kart acik">' + menuBlok(m) + '</div>' : ''; }
+    if (ms && ms.value) menuOnizleCiz();
     if (ms) ms.addEventListener('change', function () {
       var m = D.menu.filter(function (x) { return x.id === ms.value; })[0];
       $('#menuOnizle', ic).innerHTML = m ? '<div class="menu-kart acik">' + menuBlok(m) + '</div>' : '';
@@ -625,7 +689,22 @@
       (x.mesaj ? '<p style="margin:0 0 14px;white-space:pre-line">' + esc(x.mesaj) + '</p>' : '') +
       (link ? '<a class="btn ana tam" target="_blank" rel="noopener" href="' + esc(link) + '">' + ik('indir', 20) + 'Foto ve video indir</a>' +
         '<p class="not" style="margin:10px 0 0">Bağlantı açılmazsa mekanla iletişime geçin.</p>' : '<p class="not" style="margin:0">Fotoğraf ve videolarınız hazır olduğunda burada görünecek.</p>') +
-      (x.bitis ? '<p class="not" style="margin:12px 0 0">Bu alan ' + esc(O.tarihTR(x.bitis)) + ' tarihine kadar açık.</p>' : '') + '</div>';
+      (x.bitis ? '<p class="not" style="margin:12px 0 0">Bu alan ' + esc(O.tarihTR(x.bitis)) + ' tarihine kadar açık.</p>' : '') +
+      '<div class="yorum-kutu"><h4>' + esc(M.ad) + ' hakkında yorumunuz</h4><label class="alan"><span>Adınız <em>(sitede görünür)</em></span><input id="yrAd" maxlength="80" value="' + esc((x.ad + ' ' + x.soyad).trim()) + '"></label>' +
+      '<label class="alan"><span>Yorumunuz</span><textarea id="yrMetin" rows="4" maxlength="1000" placeholder="Düğününüz nasıldı? Düşüncelerinizi yazın."></textarea></label><div id="yrH"></div><button type="button" class="btn ana" id="yrGonder">Yorumu gönder</button>' +
+      '<p class="not" style="margin:8px 0 0">Yorumunuz ' + esc(M.ad) + ' onayından sonra Çiftlerimiz sayfasında yayınlanır.</p></div></div>';
+    sb.rpc('cift_yorum_oku', { p_slug: A.MEKAN_SLUG, p_kod: kod }).then(function (o) {
+      if (o && o.data && o.data.yorum) { $('#yrMetin').value = o.data.yorum; if (o.data.ad) $('#yrAd').value = o.data.ad; }
+    }, function () { /* tablo yoksa sessiz */ });
+    $('#yrGonder').addEventListener('click', async function () {
+      var d = $('#yrGonder'), m = $('#yrMetin').value.trim(), hk = $('#yrH');
+      if (m.length < 5) { hk.innerHTML = '<div class="hata-kutu">Lütfen yorumunuzu yazın.</div>'; return; }
+      d.disabled = true; hk.innerHTML = '';
+      var r = await sb.rpc('cift_yorum_yaz', { p_slug: A.MEKAN_SLUG, p_kod: kod, p_ad: $('#yrAd').value.trim(), p_yorum: m });
+      d.disabled = false;
+      if (r.error || !r.data) { hk.innerHTML = '<div class="hata-kutu">' + esc(r.error ? O.hataMetni(r.error) : 'Yorum kaydedilemedi. Şifrenizi kontrol edin.') + '</div>'; return; }
+      hk.innerHTML = '<div class="ok-kutu" role="status">Yorumunuz alındı, teşekkürler. Onaydan sonra yayınlanacak.</div>';
+    });
   }
 
   /* ---------- Videolar ---------- */

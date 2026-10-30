@@ -84,7 +84,7 @@
       '<div class="ust">' + (ctx.logo ? '<img src="' + esc(ctx.logo) + '" alt="">' : '') + '<b>' + esc(unvan) + '</b><span>' + esc(adres) + (tel ? ' TEL:' + esc(tel) : '') + '</span></div>' +
       '<div class="kutu"><div class="bant">' + esc(ust) + '</div>' +
       '<div class="sira"><div><b>Tarih :</b> ' + esc(gun) + '</div><div><b>Sözleşme Tarihi :</b> ' + esc(tarihNokta(k.sozlesme_tarihi)) + '</div><div><b>Kişi Sayısı :</b> ' + esc(k.kisi_sayisi || '') + '</div><div><b>Saat :</b> ' + saat + '</div>' +
-      ((k.org_turu || k.seans || ctx.salonAdi) ? '<div><b>' + esc([k.org_turu, k.seans, ctx.salonAdi].filter(Boolean).join(' · ')) + '</b></div>' : '') + '</div>' +
+      ((k.org_turu || k.seans || ctx.salonAdi) ? '<div><b>' + esc([k.org_turu, k.seans, ctx.salonAdi ? 'Salon: ' + ctx.salonAdi : ''].filter(Boolean).join(' · ')) + '</b></div>' : '') + '</div>' +
       '<div class="sira"><b>Organizasyon Sahibi</b></div>' +
       '<div class="sira">' + satir('Çift Adı:', k.cift_adi) + satir('eMail:', k.eposta) + '</div>' +
       '<div class="sira">' + satir('Ad Soyad:', ad(k)) + satir('TC / Sicil No:', k.tc_no) + satir('Tel.:', tele.join(' - ')) + '</div>' +

@@ -182,15 +182,17 @@
   }
 
   /* ---------- İskelet ---------- */
-  var SEKMELER = [['takip', 'Takip'], ['takvim', 'Takvim'], ['rapor', 'Rapor'], ['icerik', 'Site içeriği'], ['ayar', 'Site ayarı'], ['hesap', 'Hesap']];
+  var SEKMELER = [['takip', 'Kayıtlar', 'belge'], ['takvim', 'Takvim', 'takvim'], ['rapor', 'Rapor', 'etiket'], ['icerik', 'Site içeriği', 'galeri'], ['ayar', 'Site ayarı', 'menu'], ['hesap', 'Hesap', 'kilit']];
+  function sekmeAd(t) { var x = SEKMELER.filter(function (s) { return s[0] === t; })[0]; return x ? x[1] : ''; }
   function iskeletCiz() {
     var yeni = K.filter(function (k) { return k.durum === 'yeni'; }).length;
-    var h = '<header class="p-ust"><div class="p-marka"><b>' + esc(M.ad) + '</b>' +
-      (MEKANLAR.length > 1 ? '<select id="mekanSec" aria-label="Mekan">' + MEKANLAR.map(function (m) { return '<option value="' + esc(m.id) + '"' + (m.id === M.id ? ' selected' : '') + '>' + esc(m.ad) + '</option>'; }).join('') + '</select>' : '') + '</div>' +
-      '<div class="p-sag"><a class="btn cizgi kucuk" target="_blank" rel="noopener" href="./">Siteyi aç</a><button class="btn cizgi kucuk" id="cikBtn">Çıkış</button></div></header>';
-    h += '<nav class="p-sekme" role="tablist">' + SEKMELER.map(function (s) {
-      return '<button role="tab" data-t="' + s[0] + '" aria-selected="' + (s[0] === sekme) + '">' + esc(s[1]) + (s[0] === 'takip' && yeni ? ' <span class="sayac">' + yeni + '</span>' : '') + '</button>';
-    }).join('') + '</nav><main id="icerik" class="p-ic"></main>';
+    var h = '<div class="p-kabuk"><aside class="p-yan"><div class="p-marka"><span class="p-logo">' + esc((M.ad || '?').charAt(0)) + '</span><div><b>' + esc(M.ad) + '</b><small>Yönetim paneli</small></div></div>' +
+      (MEKANLAR.length > 1 ? '<select id="mekanSec" aria-label="Mekan">' + MEKANLAR.map(function (m) { return '<option value="' + esc(m.id) + '"' + (m.id === M.id ? ' selected' : '') + '>' + esc(m.ad) + '</option>'; }).join('') + '</select>' : '') +
+      '<nav class="p-sekme" role="tablist">' + SEKMELER.map(function (s) {
+        return '<button role="tab" data-t="' + s[0] + '" aria-selected="' + (s[0] === sekme) + '">' + ik(s[2], 20) + '<span>' + esc(s[1]) + '</span>' + (s[0] === 'takip' && yeni ? '<em class="sayac">' + yeni + '</em>' : '') + '</button>';
+      }).join('') + '</nav>' +
+      '<div class="p-yan-alt"><a class="p-yan-dugme" target="_blank" rel="noopener" href="./">Siteyi aç</a><button class="p-yan-dugme" id="cikBtn" type="button">Çıkış</button></div></aside>' +
+      '<div class="p-ana"><header class="p-baslik"><h1 id="pBaslik">' + esc(sekmeAd(sekme)) + '</h1><span class="p-tarih">' + esc(O.tarihTR(O.bugunISO())) + '</span></header><main id="icerik" class="p-ic"></main></div></div>';
     $('#kok').innerHTML = h;
     $('#cikBtn').addEventListener('click', cikis);
     var ms = $('#mekanSec'); if (ms) ms.addEventListener('change', function () { mekanSec(ms.value).catch(hata); });
@@ -198,7 +200,7 @@
     sekmeCiz();
   }
   function git(t) {
-    sekme = t;
+    sekme = t; var pb = document.getElementById('pBaslik'); if (pb) pb.textContent = sekmeAd(t);
     $$('.p-sekme button').forEach(function (b) { b.setAttribute('aria-selected', b.getAttribute('data-t') === t ? 'true' : 'false'); });
     sekmeCiz();
   }
@@ -215,7 +217,14 @@
   }
   function takipCiz() {
     var say = {}; K.forEach(function (k) { say[k.durum] = (say[k.durum] || 0) + 1; });
-    var h = '<div class="arac"><input id="ara" type="search" placeholder="Ad, telefon ya da e-posta ara" value="' + esc(filtre.ara) + '" aria-label="Ara">' +
+    var aktifK = K.filter(function (k) { return k.durum !== 'iptal'; });
+    var topla2 = function (f) { return aktifK.reduce(function (t, k) { return t + (Number(k[f]) || 0); }, 0); };
+    var rez = K.filter(function (k) { return k.durum === 'rezerve' || k.durum === 'sozlesme'; }).length;
+    var h = '<div class="ozet-izgara">' +
+      [['Yeni talep', say.yeni || 0, 'bad'], ['Rezerve / sözleşmeli', rez, ''], ['Toplam kayıt', aktifK.length, ''], ['Toplam tutar', O.para(topla2('tutar')), ''], ['Tahsilat', O.para(topla2('odenen')), 'ok'], ['Kalan alacak', O.para(topla2('kalan')), 'warn']].map(function (x) {
+        return '<div class="ozet-k ' + x[2] + '"><span>' + esc(x[0]) + '</span><b>' + esc(x[1]) + '</b></div>';
+      }).join('') + '</div>' +
+      '<div class="arac"><input id="ara" type="search" placeholder="Ad, telefon ya da e-posta ara" value="' + esc(filtre.ara) + '" aria-label="Ara">' +
       '<select id="fd" aria-label="Duruma göre"><option value="">Tüm durumlar</option>' + DURUM.map(function (d) { return '<option value="' + d[0] + '"' + (filtre.durum === d[0] ? ' selected' : '') + '>' + d[1] + (say[d[0]] ? ' (' + say[d[0]] + ')' : '') + '</option>'; }).join('') + '</select>' +
       '<select id="fy" aria-label="Düğün yılı"><option value="">Tüm yıllar</option>' + yillar().map(function (y) { return '<option' + (filtre.yil === y ? ' selected' : '') + '>' + y + '</option>'; }).join('') + '</select>' +
       '<button class="btn ana" id="yeniKayit">Yeni kayıt</button><button class="btn cizgi" id="csv">Excel için indir</button></div><div id="liste"></div>';
@@ -234,12 +243,16 @@
       if (filtre.yil && (k.dugun_tarihi || '').slice(0, 4) !== filtre.yil) return;
       if (a && (k.ad + ' ' + k.soyad + ' ' + k.telefon + ' ' + (k.eposta || '')).toLocaleLowerCase('tr').indexOf(a) < 0) return;
       n++;
+      h += '<button class="kayit tablo-satir' + (k.durum === 'yeni' ? ' yeni' : '') + '" data-id="' + esc(k.id) + '"><span class="t-ad"><b>' + esc(k.cift_adi || (k.ad + ' ' + k.soyad)) + '</b><small>' + esc(k.telefon || '') + '</small></span>' +
+        '<span class="t-tarih">' + esc(k.dugun_tarihi ? O.tarihTR(k.dugun_tarihi) : 'Tarih yok') + '</span><span class="t-salon">' + esc(salonAd(k.salon_id) || '') + '</span><span class="t-kisi">' + esc(k.kisi_sayisi || '') + '</span>' +
+        '<span class="t-durum">' + rozet(k.durum) + '</span><span class="t-tutar">' + (Number(k.tutar) > 0 ? esc(O.para(k.tutar)) : '') + '</span><span class="t-kalan' + (Number(k.kalan) > 0 ? ' var' : '') + '">' + (Number(k.tutar) > 0 ? esc(O.para(k.kalan)) : '') + '</span></button>';
+      return;
       h += '<button class="kayit' + (k.durum === 'yeni' ? ' yeni' : '') + '" data-id="' + esc(k.id) + '"><div class="k-ust"><b>' + esc(k.ad + ' ' + k.soyad) + '</b>' + rozet(k.durum) + '</div>' +
         '<div class="k-alt"><span>' + esc(k.dugun_tarihi ? O.tarihTR(k.dugun_tarihi) : 'Tarih yok') + '</span>' + (k.salon_id ? '<span>' + esc(salonAd(k.salon_id)) + '</span>' : '') +
         (k.kisi_sayisi ? '<span>' + esc(k.kisi_sayisi) + ' kişi</span>' : '') + '<span class="soluk">' + esc(k.kaynak === 'teklif' ? 'Teklif talebi' : k.kaynak === 'talep' ? 'Talep' : 'Elle girildi') + '</span></div>' +
         (Number(k.tutar) > 0 ? '<div class="k-alt"><span>Tutar <b>' + esc(O.para(k.tutar)) + '</b></span><span>Ödenen <b>' + esc(O.para(k.odenen)) + '</b></span><span>Kalan <b>' + esc(O.para(k.kalan)) + '</b></span></div>' : '') + '</button>';
     });
-    $('#liste').innerHTML = n ? h : '<div class="bos">' + (K.length ? 'Bu filtreyle kayıt yok.' : 'Henüz kayıt yok. Sitenizden gelen teklif ve talepler burada görünecek. "Yeni kayıt" ile elle de ekleyebilirsiniz.') + '</div>';
+    $('#liste').innerHTML = n ? '<div class="tablo-bas"><span>Çift</span><span>Düğün tarihi</span><span>Salon</span><span>Kişi</span><span>Durum</span><span>Tutar</span><span>Kalan</span></div>' + h : '<div class="bos">' + (K.length ? 'Bu filtreyle kayıt yok.' : 'Henüz kayıt yok. Sitenizden gelen teklif ve talepler burada görünecek. "Yeni kayıt" ile elle de ekleyebilirsiniz.') + '</div>';
     $$('.kayit', $('#liste')).forEach(function (b) { b.addEventListener('click', function () { kayitAc(b.getAttribute('data-id')); }); });
   }
 
@@ -656,7 +669,7 @@
 
   /* ================= İÇERİK ================= */
   var icerikAlt = 'fiyat';
-  var ALTLAR = [['fiyat', 'Fiyatlar'], ['menu', 'Menüler'], ['foto', 'Fotoğraflar'], ['video', 'Videolar'], ['makyaj', 'Make-up'], ['firma', 'Anlaşmalı firmalar'], ['ozellik', 'Mekan özellikleri'], ['salon', 'Salonlar'], ['sozlesme', 'Sözleşme']];
+  var ALTLAR = [['fiyat', 'Fiyatlar'], ['menu', 'Menüler'], ['foto', 'Fotoğraflar'], ['video', 'Videolar'], ['makyaj', 'Make-up'], ['firma', 'Anlaşmalı firmalar'], ['ciftler', 'Çiftlerimiz'], ['ozellik', 'Mekan özellikleri'], ['salon', 'Salonlar'], ['sozlesme', 'Sözleşme']];
   function icerikCiz() {
     aktifSayfa().innerHTML = '<div class="alt-sekme" role="tablist">' + ALTLAR.map(function (a) { return '<button role="tab" data-a="' + a[0] + '" aria-selected="' + (a[0] === icerikAlt) + '">' + a[1] + '</button>'; }).join('') + '</div><div id="altIc"></div>';
     $('.alt-sekme').addEventListener('click', function (e) {
@@ -719,6 +732,11 @@
     firma: { tablo: 'anlasmali_firmalar', baslik: 'Anlaşmalı firmalar', tek: 'firma', aciklama: 'Çiftlere indirim sunan çiçekçi, fotoğrafçı, gelinlikçi vb. firmalar. Sitede kart olarak görünür; kaç kişinin tıkladığını burada izlersiniz.',
       alanlar: [{ k: 'ad', e: 'Firma adı', t: 'text', zor: true }, { k: 'kategori', e: 'Kategori', t: 'text', ornek: 'Çiçekçi' }, { k: 'aciklama', e: 'Kısa açıklama', t: 'textarea' }, { k: 'indirim_oran', e: 'İndirim oranı (%)', t: 'number', max: 100 }, { k: 'instagram', e: 'Instagram', t: 'text', ornek: '@kullaniciadi' }, { k: 'web', e: 'Web sitesi', t: 'url' }, { k: 'telefon', e: 'Telefon', t: 'text' }, SIRA, AKTIF],
       satir: function (r) { return [r.ad, [r.kategori, r.indirim_oran ? '%' + r.indirim_oran + ' indirim' : '', r.yonlendirme_sayisi ? r.yonlendirme_sayisi + ' tıklama' : ''].filter(Boolean).join(' · ')]; } },
+    ciftler: { tablo: 'cift_yorumlari', baslik: 'Çiftlerimiz', tek: 'çift yorumu', aciklama: 'Sitedeki "Çiftlerimiz" sayfasında kategori kategori görünür. Çiftin fotoğrafını ve yorumunu buradan girin. Çiftler şifreyle giriş yapıp yorumlarını kendileri de yazabilir; o yorumlar "Onay bekliyor" olarak düşer, düzenleyip "Yayında" yapın.',
+      alanlar: [{ k: 'ad', e: 'Çift, kişi ya da firma adı', t: 'text', zor: true, ornek: 'Ayşe & Ali' }, { k: 'kategori', e: 'Kategori', t: 'text', zor: true, v: 'Düğün', ornek: 'Düğün, Nikah, Nişan, Kına, Firma', yardim: 'Aynı yazılan kategoriler sitede bir arada gruplanır.' },
+        { k: 'foto_url', e: 'Fotoğraf', t: 'gorsel' }, { k: 'yorum', e: 'Yorum', t: 'textarea', satir: 6 },
+        { k: 'durum', e: 'Durum', t: 'select', v: 'yayinda', opt: [['yayinda', 'Yayında'], ['bekliyor', 'Onay bekliyor'], ['gizli', 'Gizli']] }, SIRA],
+      satir: function (r) { return [r.ad, (r.kategori || '') + ' · ' + ({ yayinda: 'Yayında', bekliyor: 'Onay bekliyor', gizli: 'Gizli' }[r.durum] || '')]; } },
     video: { tablo: 'mekan_videolari', baslik: 'Videolar', tek: 'video', aciklama: 'YouTube bağlantısı yapıştırın (önerilir, tam ekran oynar). "Shorts" dikey kısa videolar içindir, "Kliplerimiz" uzun klipler içindir. Instagram bağlantısı koyarsanız ziyaretçi Instagram\'a yönlendirilir.',
       alanlar: [{ k: 'url', e: 'Video bağlantısı', t: 'url', zor: true, ornek: 'https://www.youtube.com/shorts/...' }, { k: 'baslik', e: 'Başlık', t: 'text' }, { k: 'bolum', e: 'Sitede nerede görünsün?', t: 'select', v: 'shorts', opt: [['shorts', 'Shorts (dikey kısa videolar)'], ['klip', 'Kliplerimiz']] }, SIRA, AKTIF],
       filtre: function (r) { return r.bolum !== 'makyaj'; },
@@ -757,6 +775,7 @@
     var etiket = '<span>' + esc(a.e) + (a.zor ? '' : ' <em>(isteğe bağlı)</em>') + '</span>';
     if (a.t === 'textarea') return '<label class="alan">' + etiket + '<textarea name="' + a.k + '" rows="' + (a.satir || 3) + '">' + esc(v) + '</textarea>' + ek + '</label>';
     if (a.t === 'select') return '<label class="alan">' + etiket + '<select name="' + a.k + '">' + a.opt.map(function (o) { return '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(v) ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') + '</select>' + ek + '</label>';
+    if (a.t === 'gorsel') return '<div class="alan gorsel-alan">' + etiket + '<input type="hidden" name="' + a.k + '" value="' + esc(v) + '"><div class="gorsel-onizle">' + (v ? '<img src="' + esc(v) + '" alt="">' : '<span class="soluk">Fotoğraf yok</span>') + '</div><label class="btn hafif kucuk gorsel-sec"><input type="file" accept="image/*" hidden>Fotoğraf seç</label>' + ek + '</div>';
     var tip = a.t === 'number' || a.t === 'money' ? 'number' : (a.t === 'url' ? 'url' : 'text');
     return '<label class="alan">' + etiket + '<input name="' + a.k + '" type="' + tip + '"' + (tip === 'number' ? ' step="' + (a.t === 'money' ? '0.01' : 'any') + '" min="0"' + (a.max ? ' max="' + a.max + '"' : '') : '') + (a.ornek ? ' placeholder="' + esc(a.ornek) + '"' : '') + ' value="' + esc(v) + '">' + ek + '</label>';
   }
@@ -766,6 +785,15 @@
     var p = pencere((satir ? 'Düzenle' : 'Yeni') + ': ' + cfg.tek, '<form id="cf" novalidate>' + alanlar.map(function (a) { return alanHtml(a, satir ? satir[a.k] : undefined); }).join('') +
       '<div id="cfh"></div><div class="satir-arac"><button class="btn ana" type="submit">Kaydet</button>' + (satir ? '<button class="btn tehlike" type="button" id="cfSil">Sil</button>' : '') + '</div></form>');
     var f = $('#cf', p.ic);
+    $$('.gorsel-alan', p.ic).forEach(function (g) {
+      var inp = $('input[type=file]', g), gizli = $('input[type=hidden]', g), on = $('.gorsel-onizle', g);
+      inp.addEventListener('change', async function () {
+        var d = inp.files[0]; if (!d) return; on.innerHTML = '<span class="soluk">Yükleniyor...</span>';
+        try { var u = await gorselYukle(d, 1200); gizli.value = u; on.innerHTML = '<img src="' + esc(u) + '" alt="">'; }
+        catch (er) { on.innerHTML = '<span class="hata-kutu">' + esc(O.hataMetni(er)) + '</span>'; }
+        inp.value = '';
+      });
+    });
     f.addEventListener('submit', async function (e) {
       e.preventDefault();
       var o = {}, eksik = '';
