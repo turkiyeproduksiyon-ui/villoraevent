@@ -20,6 +20,14 @@
   };
   var SIRA = ['tam', 'iki', 'uc', 'ud', 'sol', 'bol'];
   var HAZIR = ['kapak', 'tam', 'sol', 'iki', 'tam', 'sol', 'bol', 'orta', 'sol', 'iki', 'sol', 'ud', 'sol', 'bol', 'arka'];   // 15 kayıt, orta sayfa 2 sayfa sayılır: PDF 16 sayfa, tam 30 fotoğraf yeri
+  /* 5 hazır tasarım: renk, yazı, kapak ve fotoğraf çerçevesi */
+  var TEMA = {
+    klasik:   { ad: 'Klasik pembe', bg: '#fff8fb', acc: null, yazi: '#7a5a68', serif: SERIF, kA: 'rgba(200,50,99,0)', kB: 'rgba(160,25,75,.92)', kYazi: '#fff', cizgi: true, kenar: 0, golge: 0, yuv: 0, sonA: '#ee5f96', sonB: null },
+    modern:   { ad: 'Modern siyah-beyaz', bg: '#ffffff', acc: '#111111', yazi: '#555555', serif: SANS, kA: 'rgba(0,0,0,0)', kB: 'rgba(0,0,0,.88)', kYazi: '#fff', cizgi: true, kenar: 0, golge: 0, yuv: 0, sonA: '#333333', sonB: '#000000' },
+    romantik: { ad: 'Romantik krem', bg: '#fbf1ea', acc: '#b76e79', yazi: '#8c6a62', serif: 'Georgia, "Palatino Linotype", serif', kA: 'rgba(183,110,121,0)', kB: 'rgba(140,70,85,.9)', kYazi: '#fff', cizgi: true, kenar: 22, kenarRenk: '#ffffff', golge: 1, yuv: 0, sonA: '#d9a1a8', sonB: '#b76e79' },
+    luks:     { ad: 'Altın lüks', bg: '#17130f', acc: '#d4af37', yazi: '#cdb57a', serif: SERIF, kA: 'rgba(15,12,8,0)', kB: 'rgba(15,12,8,.94)', kYazi: '#e6c866', cizgi: true, kenar: 6, kenarRenk: '#d4af37', golge: 0, yuv: 0, sonA: '#2a2216', sonB: '#0f0c08' },
+    minimal:  { ad: 'Minimal beyaz', bg: '#ffffff', acc: '#9aa0a6', yazi: '#9aa0a6', serif: SANS, kA: 'rgba(255,255,255,0)', kB: 'rgba(0,0,0,.5)', kYazi: '#fff', cizgi: false, kenar: 34, kenarRenk: '#ffffff', golge: 0, yuv: 0, sonA: '#f2f2f2', sonB: '#d9d9d9', kapakGolge: 1 }
+  };
   var IC = { x: 0.07, y: 0.085, w: 0.86, h: 0.835 };       // iç sayfaların fotoğraf alanı (sayfa oranı)
 
   function yukle(src) { return new Promise(function (res, rej) { var im = new Image(); im.onload = function () { res(im); }; im.onerror = function () { rej(new Error('Fotoğraf açılamadı')); }; im.src = src; }); }
@@ -75,42 +83,51 @@
     var X = IC.x * W, Y = IC.y * H, GW = IC.w * W, GH = IC.h * H;
     return sb.alan.map(function (a) { return [X + a[0] * GW, Y + a[1] * GH, a[2] * GW, a[3] * GH]; });
   }
-  async function sayfaCiz(ctx, sayfa, no, toplam, bilgi, acc) {
+  async function sayfaCiz(ctx, sayfa, no, toplam, bilgi, acc0) {
+    var T = TEMA[bilgi.tema] || TEMA.klasik, acc = T.acc || acc0, SF = T.serif;
     var sb = SABLON[sayfa.t], kapak = sayfa.t === 'kapak', px = alanPx(sb, sayfa);
     var arka = sayfa.t === 'arka', tamS = !!sb.tam;
-    ctx.fillStyle = tamS ? '#fff' : '#fff8fb'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = tamS ? (bilgi.tema === 'luks' ? '#000' : '#fff') : T.bg; ctx.fillRect(0, 0, W, H);
     for (var i = 0; i < px.length; i++) {
       var r = px[i], f = sayfa.f[i];
       if (f) {
-        var im = await yukle(f.url), s = kaynak(f, r[2], r[3]);
-        ctx.drawImage(im, s.sx, s.sy, s.sw, s.sh, r[0], r[1], r[2], r[3]); im.src = '';
+        var p = tamS ? 0 : T.kenar, im = await yukle(f.url), s = kaynak(f, r[2] - 2 * p, r[3] - 2 * p);
+        if (p) {
+          ctx.save(); if (T.golge) { ctx.shadowColor = 'rgba(60,20,30,.28)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10; }
+          ctx.fillStyle = T.kenarRenk; ctx.fillRect(r[0], r[1], r[2], r[3]); ctx.restore();
+        }
+        ctx.drawImage(im, s.sx, s.sy, s.sw, s.sh, r[0] + p, r[1] + p, r[2] - 2 * p, r[3] - 2 * p); im.src = '';
       }
     }
     if (kapak) {
-      var g = ctx.createLinearGradient(0, H * 0.45, 0, H); g.addColorStop(0, 'rgba(200,50,99,0)'); g.addColorStop(1, 'rgba(160,25,75,.92)');
+      var g = ctx.createLinearGradient(0, H * 0.45, 0, H); g.addColorStop(0, T.kA); g.addColorStop(1, T.kB);
       ctx.fillStyle = g; ctx.fillRect(0, H * 0.45, W, H * 0.55);
-      ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.font = '40px ' + SERIF; ctx.fillText(bilgi.mekan, 90, 120);
-      sigdir(ctx, bilgi.baslik, '120px ' + SERIF, W - 180); ctx.fillText(bilgi.baslik, 90, H - 270);
-      ctx.fillRect(90, H - 235, 160, 5); ctx.font = '46px ' + SANS; ctx.fillText(bilgi.tarih || 'Anı dergisi', 90, H - 165);
+      if (T.kapakGolge) { ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 24; }
+      if (bilgi.tema === 'luks') { ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 4; ctx.strokeRect(40, 40, W - 80, H - 80); }
+      ctx.fillStyle = T.kYazi; ctx.textAlign = 'left'; ctx.font = '40px ' + SF; ctx.fillText(bilgi.mekan, 90, 120);
+      sigdir(ctx, bilgi.baslik, '120px ' + SF, W - 180); ctx.fillText(bilgi.baslik, 90, H - 270);
+      ctx.fillRect(90, H - 235, 160, 5); ctx.font = '46px ' + SANS; ctx.fillText(bilgi.tarih || 'Anı dergisi', 90, H - 165); ctx.shadowBlur = 0;
     } else if (arka) {
-      var g2 = ctx.createLinearGradient(0, H * 0.7, 0, H); g2.addColorStop(0, 'rgba(160,25,75,0)'); g2.addColorStop(1, 'rgba(160,25,75,.9)');
+      var g2 = ctx.createLinearGradient(0, H * 0.7, 0, H); g2.addColorStop(0, T.kA); g2.addColorStop(1, T.kB);
       ctx.fillStyle = g2; ctx.fillRect(0, H * 0.7, W, H * 0.3);
-      ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = '64px ' + SERIF; ctx.fillText('Teşekkürler', W / 2, H - 175);
-      ctx.font = '34px ' + SERIF; ctx.fillText(bilgi.mekan, W / 2, H - 120);
-      ctx.font = '26px ' + SANS; ctx.fillText([bilgi.telefon, bilgi.instagram].filter(Boolean).join('   '), W / 2, H - 70); ctx.textAlign = 'left';
+      if (T.kapakGolge) { ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 24; }
+      ctx.fillStyle = T.kYazi; ctx.textAlign = 'center'; ctx.font = '64px ' + SF; ctx.fillText('Teşekkürler', W / 2, H - 175);
+      ctx.font = '34px ' + SF; ctx.fillText(bilgi.mekan, W / 2, H - 120);
+      ctx.font = '26px ' + SANS; ctx.fillText([bilgi.telefon, bilgi.instagram].filter(Boolean).join('   '), W / 2, H - 70); ctx.textAlign = 'left'; ctx.shadowBlur = 0;
     } else if (tamS) {
       ctx.fillStyle = '#fff'; ctx.textAlign = 'right'; ctx.font = '28px ' + SANS; ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = 8;
       ctx.fillText(String(no), W - 60, H - 50); ctx.shadowBlur = 0; ctx.textAlign = 'left';
     } else {
-      ctx.fillStyle = acc; ctx.textAlign = 'left'; ctx.font = '34px ' + SERIF; ctx.fillText(bilgi.mekan, 90, 108);
-      ctx.fillRect(90, 132, W - 180, 3);
-      ctx.fillStyle = '#7a5a68'; ctx.font = '28px ' + SANS; ctx.fillText(bilgi.baslik, 90, H - 62);
+      ctx.fillStyle = acc; ctx.textAlign = 'left'; ctx.font = '34px ' + SF; ctx.fillText(bilgi.mekan, 90, 108);
+      if (T.cizgi) ctx.fillRect(90, 132, W - 180, 3);
+      ctx.fillStyle = T.yazi; ctx.font = '28px ' + SANS; ctx.fillText(bilgi.baslik, 90, H - 62);
       ctx.textAlign = 'right'; ctx.fillText(String(no), W - 90, H - 62); ctx.textAlign = 'left';
     }
   }
-  function sonSayfa(ctx, bilgi, acc) {
-    var gr = ctx.createLinearGradient(0, 0, W, H); gr.addColorStop(0, '#ee5f96'); gr.addColorStop(1, acc);
-    ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+  function sonSayfa(ctx, bilgi, acc0) {
+    var T = TEMA[bilgi.tema] || TEMA.klasik, acc = T.sonB || T.acc || acc0;
+    var gr = ctx.createLinearGradient(0, 0, W, H); gr.addColorStop(0, T.sonA); gr.addColorStop(1, acc);
+    ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H); ctx.fillStyle = bilgi.tema === 'minimal' ? '#666' : (bilgi.tema === 'luks' ? '#e6c866' : '#fff'); ctx.textAlign = 'center';
     ctx.font = '100px ' + SERIF; ctx.fillText('Teşekkürler', W / 2, H / 2 - 40); ctx.fillRect(W / 2 - 80, H / 2, 160, 4);
     ctx.font = '44px ' + SERIF; ctx.fillText(bilgi.mekan, W / 2, H / 2 + 90);
     ctx.font = '32px ' + SANS; ctx.fillText([bilgi.telefon, bilgi.instagram].filter(Boolean).join('   '), W / 2, H / 2 + 150);
@@ -146,12 +163,13 @@
 
   /* ---- Düzenleyici ---- */
   function ac(ctx) {
-    var M = ctx.mekan, S = { ad: '', tarih: '', sayfalar: HAZIR.map(function (t) { return { t: t, f: [] }; }), sec: 0, slot: null };
+    var M = ctx.mekan, S = { ad: '', tarih: '', sayfalar: HAZIR.map(function (t) { return { t: t, f: [] }; }), sec: 0, slot: null, tema: 'klasik' };
     var sablonKucuk = function (id) {
       return '<span class="dg-mini' + (SABLON[id].cift ? ' cift' : '') + '">' + SABLON[id].alan.map(function (a) { return '<i style="left:' + (a[0] * 100) + '%;top:' + (a[1] * 100) + '%;width:' + (a[2] * 100) + '%;height:' + (a[3] * 100) + '%"></i>'; }).join('') + '</span>';
     };
     var h = '<div class="dg2"><p class="not" style="margin:0 0 12px">Dergi hazır: kapak, arka kapak ve aradaki sayfalarda toplam 30 fotoğraf yeri var. Dergi ortasındaki çift sayfa tek fotoğrafla iki sayfayı kaplar; dergiyi iki elinizle açınca bütün görünür. Tam sayfalar kenarsızdır. Boş bıraktığınız çerçeveler ve hiç fotoğraf konmayan sayfalar PDF dışında kalır. Sayfa şablonunu değiştirebilirsiniz, fotoğrafı çerçevenin içine bırakın ya da çerçeveye dokunup seçin. Fotoğrafı parmağınızla kaydırıp yakınlaştırarak istediğiniz kısmı gösterin. Sonunda PDF olarak indirin. Fotoğraflar yalnızca cihazınızda işlenir, hiçbir yere yüklenmez.</p>' +
       '<div class="ikili"><label class="alan"><span>Çift adı</span><input id="dgAd" maxlength="60" placeholder="Ayşe & Ali"></label><label class="alan"><span>Düğün tarihi</span><input id="dgTarih" type="date"></label></div>' +
+      '<div class="dg2-temalar" role="radiogroup" aria-label="Dergi tasarımı">' + Object.keys(TEMA).map(function (k) { return '<button type="button" class="dg2-tema' + (k === 'klasik' ? ' ak' : '') + '" data-tema="' + k + '"><span class="dg2-tm t-' + k + '"><i></i><i></i></span><small>' + esc(TEMA[k].ad) + '</small></button>'; }).join('') + '</div>' +
       '<div class="dg2-seritler"><div class="dg2-sayfalar" id="dgSayfalar"></div></div>' +
       '<div class="dg2-tuval-kap"><div class="dg2-tuval" id="dgTuval"></div></div>' +
       '<div class="dg2-kontrol" id="dgKontrol"></div>' +
@@ -186,7 +204,7 @@
     function tuvalCiz() {
       var p = S.sayfalar[S.sec], sb = SABLON[p.t], kapak = p.t === 'kapak', tamS = !!sb.tam;
       var kutu = sb.tam ? { x: 0, y: 0, w: 1, h: 1 } : IC;
-      tuval.className = 'dg2-tuval' + (tamS ? ' kapak' : '') + (sb.cift ? ' cift' : '');
+      tuval.className = 'dg2-tuval t-' + S.tema + (tamS ? ' kapak' : '') + (sb.cift ? ' cift' : '');
       tuval.innerHTML = (tamS ? '' : '<div class="dg2-ust-yazi">' + esc(M.ad) + '</div><div class="dg2-alt-yazi"><span id="dgAdYazi"></span><span>' + S.sec + '</span></div>') +
         '<div class="dg2-icerik" style="left:' + (kutu.x * 100) + '%;top:' + (kutu.y * 100) + '%;width:' + (kutu.w * 100) + '%;height:' + (kutu.h * 100) + '%">' +
         sb.alan.map(function (a, i) {
@@ -226,6 +244,11 @@
     }
 
     /* olaylar */
+    $('.dg2-temalar').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-tema]'); if (!b) return; S.tema = b.getAttribute('data-tema');
+      Array.prototype.forEach.call(ic.querySelectorAll('.dg2-tema'), function (x) { x.classList.toggle('ak', x === b); });
+      tuvalCiz();
+    });
     serit.addEventListener('click', function (e) { var b = e.target.closest('[data-s]'); if (b) sec(+b.getAttribute('data-s')); });
     kontrol.addEventListener('click', function (e) {
       var b = e.target.closest('[data-sb]'), p = S.sayfalar[S.sec];
@@ -302,7 +325,7 @@
       if (!S.sayfalar[0].f[0]) { mesaj('Kapak için bir fotoğraf ekleyin.'); return; }
       d.disabled = true; mesaj('');
       try {
-        var pdf = await uret(S.sayfalar, { baslik: S.ad || 'Düğün anılarımız', tarih: S.tarih ? O.tarihTR(S.tarih) : '', mekan: M.ad, telefon: M.telefon || '', instagram: ctx.instagram || '' },
+        var pdf = await uret(S.sayfalar, { tema: S.tema, baslik: S.ad || 'Düğün anılarımız', tarih: S.tarih ? O.tarihTR(S.tarih) : '', mekan: M.ad, telefon: M.telefon || '', instagram: ctx.instagram || '' },
           function (n, t) { d.textContent = 'Dergi hazırlanıyor... sayfa ' + n + ' / ' + t; });
         var a = document.createElement('a'); a.href = URL.createObjectURL(pdf);
         a.download = 'foto-dergi' + (S.ad ? '-' + S.ad.replace(/[^\wÇĞİÖŞÜçğıöşü]+/g, '-') : '') + '.pdf';

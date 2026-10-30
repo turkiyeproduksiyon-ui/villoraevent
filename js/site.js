@@ -21,7 +21,16 @@
     sb = window.supabase.createClient(A.SUPABASE_URL, A.SUPABASE_KEY);
     function zamanli(p, ms) { return new Promise(function (ok, no) { var t = setTimeout(function () { no(new Error('zaman_asimi')); }, ms); p.then(function (v) { clearTimeout(t); ok(v); }, function (e) { clearTimeout(t); no(e); }); }); }
     function dene(n) { return zamanli(yukle(), 10000).catch(function (e) { if (n > 0 && !(e && e.message === 'mekan_yok')) return dene(n - 1); throw e; }); }
-    dene(2).then(ciz).catch(function (e) {
+    var ONB = 'villora_veri_v1_' + A.MEKAN_SLUG, ilk = false, eski = null;
+    try { eski = JSON.parse(localStorage.getItem(ONB) || 'null'); } catch (e0) { eski = null; }
+    if (eski && eski.M && eski.D) { M = eski.M; D = eski.D; try { ciz(); ilk = true; } catch (e1) { ilk = false; } }
+    dene(2).then(function () {
+      var yeni = JSON.stringify({ M: M, D: D });
+      try { localStorage.setItem(ONB, yeni); } catch (e2) { /* depolama yoksa önemsiz */ }
+      if (!ilk) return ciz();
+      if (JSON.stringify({ M: eski.M, D: eski.D }) !== yeni && !acikPencere) { var y = window.pageYOffset; ciz(); window.scrollTo(0, y); }
+    }).catch(function (e) {
+      if (ilk) return;
       var m = e && e.message;
       if (m === 'mekan_yok') hataSayfasi('Mekan bulunamadı', 'Bu adres şu anda yayında değil.');
       else {
@@ -294,8 +303,10 @@
     window.scrollTo({ top: 0 });
   }
 
+  var tikH = null;
   function bagla() {
-    document.addEventListener('click', function (e) {
+    if (tikH) document.removeEventListener('click', tikH);
+    tikH = function (e) {
       var ms = e.target.closest('[data-menusec]');
       if (ms) { islemCalistir('teklif', { menu: ms.getAttribute('data-menusec') }); return; }
       var mi = e.target.closest('[data-menu]');
@@ -312,7 +323,8 @@
       if (mf) { buyut(+mf.getAttribute('data-mfoto'), MAKYAJ.foto); return; }
       var v = e.target.closest('[data-video], [data-klip], [data-mvideo]');
       if (v) { videoOynat(v); }
-    });
+    };
+    document.addEventListener('click', tikH);
     $('#menuDugme').addEventListener('click', menuPenceresi);
     $('#kvkkAc').addEventListener('click', kvkkAc);
 
@@ -751,6 +763,7 @@
 
   /* ---------- Çerez bilgisi ---------- */
   function cerezUyari() {
+    if (document.querySelector('.cerez')) return;
     try { if (localStorage.getItem('cerez_ok') === '1') return; } catch (e) { /* depolama yoksa göster */ }
     var c = document.createElement('div');
     c.className = 'cerez'; c.setAttribute('role', 'region'); c.setAttribute('aria-label', 'Çerez bilgisi');
