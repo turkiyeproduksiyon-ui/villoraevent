@@ -114,7 +114,7 @@
 
     if (acik('tarih_sorgu')) {
       h += '<div class="tarih-kart"><h2>Düğün tarihiniz müsait mi?</h2><p class="not alt">Tarihi seçin, anında görün.</p>' +
-        '<div class="tarih-satir"><label class="sr" for="tarihSor">Düğün tarihi</label><input type="date" id="tarihSor" data-ph="Tarih seçin (gg.aa.yyyy)" min="' + O.bugunISO() + '"></div>' +
+        '<div class="tarih-satir"><label class="sr" for="tarihSor">Düğün tarihi</label><span class="tarih-sar"><input type="date" id="tarihSor" min="' + O.bugunISO() + '"><span class="tarih-ph" aria-hidden="true">gg.aa.yyyy</span></span></div>' +
         '<div class="tarih-sonuc" id="tarihSonuc" aria-live="polite"></div></div>';
     }
 
@@ -166,11 +166,11 @@
       D.menu.forEach(function (m, i) {
         var bl = O.menuAyir ? O.menuAyir(m.icerik) : [], hz = O.satirlar ? O.satirlar(m.dahil_hizmetler) : [];
         var etiket = bl.map(function (x) { return bolumAdi(x.baslik); }).filter(Boolean);
-        h += '<article class="vt-kart"><div class="vt-kart-ust"><span class="vt-no">' + (/^men[uü]\s*\d+/i.test(m.ad) ? esc(m.ad.replace(/^men[uü]\s*/i, '')) : (i + 1)) + '</span><h3>' + esc(m.ad) + '</h3></div>' +
+        h += '<article class="vt-kart"><div class="vt-kart-ust"><span class="vt-no">' + (/^men[uü]\s*\d+/i.test(m.ad) ? esc(m.ad.replace(/^men[uü]\s*/i, '')) : (i + 1)) + '</span><h3>' + esc(m.ad) + (etTuru(m) ? ' <small class="vt-et">(' + esc(etTuru(m)) + ')</small>' : '') + '</h3></div>' +
           '<div class="vt-kart-ic">' +
           (etiket.length ? '<ul class="vt-etiket">' + etiket.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' : '') +
-          (fiyatYaz(m) ? '<p class="vt-fiyat"><b>' + esc(fiyatYaz(m)) + '</b> <span>kişi başı</span>' + (m.fiyat_notu ? '<small>' + esc(m.fiyat_notu) + '</small>' : '') + '</p>' : '') +
           (hz.length ? '<p class="vt-dahil"><b>' + hz.length + '</b> hizmet menüye dahil</p>' : '') +
+          (fiyatYaz(m) ? '<p class="vt-fiyat">(' + esc(fiyatYaz(m)) + ' <span>kişi başı</span>)' + (m.fiyat_notu ? '<small>' + esc(m.fiyat_notu) + '</small>' : '') + '</p>' : '') +
           '<div class="vt-kart-dugme"><button type="button" class="btn cizgi" data-menu="' + esc(m.id) + '">İncele</button><button type="button" class="btn ana" data-menusec="' + esc(m.id) + '">Teklif al</button></div></div></article>';
       });
       h += '</div></div></section>';
@@ -209,7 +209,7 @@
       '<div class="vt-il-dugme">' + (wa ? '<a class="btn ana" href="' + esc(wa) + '" target="_blank" rel="noopener">' + ik('whatsapp', 20) + 'WhatsApp</a>' : '') +
       (tel ? '<a class="btn cizgi" href="tel:' + esc(tel) + '">' + ik('telefon', 20) + esc(M.telefon) + '</a>' : '') +
       (harita ? '<a class="btn cizgi" href="' + esc(harita) + '" target="_blank" rel="noopener">' + ik('konum', 20) + 'Yol tarifi</a>' : '') +
-      (O.sosyalUrl('instagram', M.instagram) ? '<a class="btn cizgi" href="' + esc(O.sosyalUrl('instagram', M.instagram)) + '" target="_blank" rel="noopener">' + ik('instagram', 20) + 'Instagram sayfamız</a>' : '') + '</div></div>' +
+      (O.sosyalUrl('instagram', M.instagram) ? '<a class="btn ig" href="' + esc(O.sosyalUrl('instagram', M.instagram)) + '" target="_blank" rel="noopener">' + ik('instagram', 20) + 'Instagram</a>' : '') + '</div></div>' +
       '<div class="vt-harita">' + haritaHtml(harita) + '</div></div></section>';
 
     /* Hakkımızda bandı: yazı panelden (hakkinda) ya da config.js'ten gelir */
@@ -277,7 +277,7 @@
     if (window.VSHORTS && videolar.length) window.VSHORTS.kur(videolar, document.getElementById('shortsAc'), document.getElementById('shortsOverlay'), M.ad);
     GALERI = galeri;
     bagla();
-    cerezUyari();
+    cerezUyari(); tarihIsaret();
   }
 
   /* Gömülü harita: koordinat harita bağlantısındaki @enlem,boylam'dan ya da config.js KONUM'dan gelir */
@@ -545,17 +545,30 @@
     return h;
   }
 
+  function etTuru(m) {
+    var bl = O.menuAyir ? O.menuAyir(m.icerik) : [];
+    var ana = bl.filter(function (x) { return /ana\s*yemek/i.test(x.baslik); }), kay = ana.length ? ana : bl, k = false, b = false;
+    kay.forEach(function (x) { x.ogeler.forEach(function (sat) {
+      var t = sat.toLocaleLowerCase('tr');
+      if (/kırmızı et/.test(t)) k = true;
+      if (/beyaz et/.test(t)) b = true;
+      if (/tavuk|piliç|pilic|hindi|balık|balik|somon|levrek|çupra|cupra|karides/.test(t)) b = true;
+      else if (/(^|[^a-zçğıöşü])et([^a-zçğıöşü]|$)|etli|dana|kuzu|biftek|bonfile|antrikot|kebap|köfte|kofte|kavurma|tandır|tandir|kaburga|şinitzel|schnitzel|pirzola|incik|döner|doner/.test(t)) k = true;
+    }); });
+    return k && b ? 'Kırmızı et ve beyaz et menü' : (k ? 'Kırmızı et menü' : (b ? 'Beyaz et menü' : ''));
+  }
+  function menuAdi(m) { var t = etTuru(m); return m.ad + (t ? ' (' + t + ')' : ''); }
   function fiyatYaz(m) {
     if (m.fiyat_kisi == null && m.fiyat_kisi_max == null) return '';
-    var a = m.fiyat_kisi, b = m.fiyat_kisi_max;
-    if (a != null && b != null && +b > +a) return O.para(a) + ' - ' + O.para(b);
-    return O.para(a != null ? a : b);
+    var fm = function (n) { return Math.round(+n).toLocaleString('tr-TR'); }, x = m.fiyat_kisi, y = m.fiyat_kisi_max;
+    if (x != null && y != null && +y > +x) return fm(x) + ' - ' + fm(y) + ' TL';
+    return fm(x != null ? x : y) + ' TL';
   }
   function menuAc(acikId) {
     if (!D.menu.length) { pencere('Menü', '<div class="bos">Menü yakında burada olacak.</div>'); return; }
     var h = '<div class="menu-liste">', secili = acikId ? D.menu.filter(function (m) { return m.id === acikId; }) : [];
     (secili.length ? secili : D.menu).forEach(function (m, i) {
-      h += '<details class="menu-kart"' + (secili.length || D.menu.length === 1 ? ' open' : '') + '><summary><b>' + esc(m.ad) + '</b>' +
+      h += '<details class="menu-kart"' + (secili.length || D.menu.length === 1 ? ' open' : '') + '><summary><b>' + esc(menuAdi(m)) + '</b>' +
         (fiyatYaz(m) ? '<span class="menu-fy">' + esc(fiyatYaz(m)) + ' <small>kişi başı</small></span>' : '') + '</summary>' +
         (m.fiyat_notu ? '<p class="menu-fnot">' + esc(m.fiyat_notu) + '</p>' : '') + (m.aciklama ? '<p class="not" style="margin:8px 0 0">' + esc(m.aciklama) + '</p>' : '') + menuBlok(m) + '</details>';
     });
@@ -644,7 +657,7 @@
       ? 'Tarihi, kişi sayınızı ve menünüzü seçin. ' + esc(M.ad) + ' size özel fiyatı hazırlayıp e-posta ya da WhatsApp ile iletir.'
       : 'Düğününüzle ilgili isteklerinizi yazın. ' + esc(M.ad) + ' size en kısa sürede dönüş yapar.') + '</p>';
     h += '<label class="alan"><span>Organizasyon türü</span><select name="tur_org" required><option value="Düğün" selected>Düğün</option><option value="Nişan">Nişan</option><option value="Diğer organizasyon">Diğer organizasyon</option></select></label>';
-    h += '<div class="ikili"><label class="alan"><span id="tarihEtiket">Düğün tarihi</span><input type="date" name="tarih" data-ph="Tarih seçin (gg.aa.yyyy)" min="' + O.bugunISO() + '" value="' + esc(ek.tarih || '') + '" required></label>' +
+    h += '<div class="ikili"><label class="alan"><span id="tarihEtiket">Düğün tarihi</span><span class="tarih-sar"><input type="date" name="tarih" min="' + O.bugunISO() + '" value="' + esc(ek.tarih || '') + '" required><span class="tarih-ph" aria-hidden="true">gg.aa.yyyy</span></span></label>' +
       '<label class="alan"><span>Kişi sayısı</span><input type="number" name="kisi" inputmode="numeric" min="1" max="5000" placeholder="300"></label></div>';
     if (D.salonlar.length > 1) {
       h += '<label class="alan"><span>Salon</span><select name="salon"><option value="">Fark etmez</option>' +
@@ -652,10 +665,10 @@
     }
     var seciliMenu = ek.menu ? D.menu.filter(function (m) { return m.id === ek.menu; })[0] : null;
     if (seciliMenu && acik('menu')) {
-      h += '<div class="alan"><span>Seçtiğiniz menü</span><div class="menu-secili"><b>' + esc(seciliMenu.ad) + '</b>' + (fiyatYaz(seciliMenu) ? '<span>' + esc(fiyatYaz(seciliMenu)) + ' / kişi</span>' : '') + '</div><input type="hidden" name="menu" value="' + esc(seciliMenu.id) + '"></div>';
+      h += '<div class="alan"><span>Seçtiğiniz menü</span><div class="menu-secili"><b>' + esc(menuAdi(seciliMenu)) + '</b>' + (fiyatYaz(seciliMenu) ? '<span>' + esc(fiyatYaz(seciliMenu)) + ' / kişi</span>' : '') + '</div><input type="hidden" name="menu" value="' + esc(seciliMenu.id) + '"></div>';
     } else if (D.menu.length && acik('menu')) {
       h += '<label class="alan"><span>Menü</span><select name="menu"><option value="">Henüz seçmedim</option>' +
-        D.menu.map(function (m) { return '<option value="' + esc(m.id) + '"' + (ek.menu === m.id ? ' selected' : '') + '>' + esc(m.ad) + (fiyatYaz(m) ? ' - ' + esc(fiyatYaz(m)) + ' / kişi' : '') + '</option>'; }).join('') + '</select></label>';
+        D.menu.map(function (m) { return '<option value="' + esc(m.id) + '"' + (ek.menu === m.id ? ' selected' : '') + '>' + esc(menuAdi(m)) + (fiyatYaz(m) ? ' - ' + esc(fiyatYaz(m)) + ' / kişi' : '') + '</option>'; }).join('') + '</select></label>';
     }
     h += '<div id="menuOnizle"></div>';
     h += '<div class="ikili"><label class="alan"><span>Adınız</span><input name="ad" autocomplete="given-name" required></label>' +
