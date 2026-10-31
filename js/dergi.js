@@ -105,8 +105,11 @@
       if (T.kapakGolge) { ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 24; }
       if (bilgi.tema === 'luks') { ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 4; ctx.strokeRect(40, 40, W - 80, H - 80); }
       ctx.fillStyle = T.kYazi; ctx.textAlign = 'left'; ctx.font = '40px ' + SF; ctx.fillText(bilgi.mekan, 90, 120);
-      sigdir(ctx, bilgi.baslik, '190px Caveat, cursive', W - 180); ctx.fillText(bilgi.baslik, 90, H - 270);
-      ctx.fillRect(90, H - 235, 160, 5); ctx.font = '72px Caveat, cursive'; ctx.fillText(bilgi.tarih || 'Anı dergisi', 90, H - 150); ctx.shadowBlur = 0;
+      if (bilgi.ad) { sigdir(ctx, bilgi.ad, '150px Caveat, cursive', W - 180); ctx.fillText(bilgi.ad, 90, H - 340); }
+      ctx.font = (bilgi.ad ? '84px' : '130px') + ' Caveat, cursive'; ctx.fillText('Düğün hikayemiz', 90, H - 230);
+      ctx.fillRect(90, H - 195, 140, 4);
+      if (bilgi.tarih) { ctx.font = '64px Caveat, cursive'; ctx.fillText(bilgi.tarih, 90, H - 120); }
+      ctx.shadowBlur = 0;
     } else if (arka) {
       var g2 = ctx.createLinearGradient(0, H * 0.7, 0, H); g2.addColorStop(0, T.kA); g2.addColorStop(1, T.kB);
       ctx.fillStyle = g2; ctx.fillRect(0, H * 0.7, W, H * 0.3);
@@ -213,12 +216,12 @@
           return '<div class="dg2-alan' + (f ? ' dolu' : '') + (S.slot === i ? ' sec' : '') + '" data-i="' + i + '" style="left:' + (a[0] * 100) + '%;top:' + (a[1] * 100) + '%;width:' + (a[2] * 100) + '%;height:' + (a[3] * 100) + '%">' +
             (f ? '<img src="' + f.url + '" alt="" draggable="false">' : '<span class="dg2-bos">Fotoğraf ekle</span>') + '</div>';
         }).join('') + '</div>' +
-        (kapak ? '<div class="dg2-kapak-yazi"><b id="dgKapakAd"></b><span id="dgKapakTarih"></span></div>' : '');
+        (kapak ? '<div class="dg2-kapak-yazi"><b id="dgKapakAd"></b><em>Düğün hikayemiz</em><span id="dgKapakTarih"></span></div>' : '');
       yaziGuncelle(); yerles(); kontrolCiz(); seritCiz();
     }
     function yaziGuncelle() {
-      var ad = S.ad || 'Düğün anılarımız', t = S.tarih ? O.tarihTR(S.tarih) : '';
-      var a = $('#dgKapakAd'), b = $('#dgKapakTarih'), c = $('#dgAdYazi'); if (a) a.textContent = ad; if (b) b.textContent = t; if (c) c.textContent = ad;
+      var ad = S.ad || 'Düğün hikayemiz', t = S.tarih ? O.tarihTR(S.tarih) : '';
+      var a = $('#dgKapakAd'), b = $('#dgKapakTarih'), c = $('#dgAdYazi'); if (a) { a.textContent = S.ad || ''; a.style.display = S.ad ? '' : 'none'; } if (b) b.textContent = t; if (c) c.textContent = ad;
     }
     function kontrolCiz() {
       var p = S.sayfalar[S.sec], h2 = '';
@@ -329,7 +332,7 @@
       if (!S.sayfalar[0].f[0]) { mesaj('Kapak için bir fotoğraf ekleyin.'); return; }
       d.disabled = true; mesaj('');
       try {
-        var pdf = await uret(S.sayfalar, { tema: S.tema, baslik: S.ad || 'Düğün anılarımız', tarih: S.tarih ? O.tarihTR(S.tarih) : '', mekan: M.ad, telefon: M.telefon || '', instagram: ctx.instagram || '' },
+        var pdf = await uret(S.sayfalar, { tema: S.tema, ad: S.ad, baslik: S.ad || 'Düğün hikayemiz', tarih: S.tarih ? O.tarihTR(S.tarih) : '', mekan: M.ad, telefon: M.telefon || '', instagram: ctx.instagram || '' },
           function (n, t) { d.textContent = 'Dergi hazırlanıyor... sayfa ' + n + ' / ' + t; });
         var a = document.createElement('a'); a.href = URL.createObjectURL(pdf);
         a.download = 'foto-dergi' + (S.ad ? '-' + S.ad.replace(/[^\wÇĞİÖŞÜçğıöşü]+/g, '-') : '') + '.pdf';

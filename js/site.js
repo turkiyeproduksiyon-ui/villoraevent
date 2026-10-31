@@ -166,11 +166,11 @@
       D.menu.forEach(function (m, i) {
         var bl = O.menuAyir ? O.menuAyir(m.icerik) : [], hz = O.satirlar ? O.satirlar(m.dahil_hizmetler) : [];
         var etiket = bl.map(function (x) { return bolumAdi(x.baslik); }).filter(Boolean);
-        h += '<article class="vt-kart"><div class="vt-kart-ust"><span class="vt-no">' + (/^men[uü]\s*\d+/i.test(m.ad) ? esc(m.ad.replace(/^men[uü]\s*/i, '')) : (i + 1)) + '</span><h3>' + esc(m.ad) + (etTuru(m) ? ' <small class="vt-et">(' + esc(etTuru(m)) + ')</small>' : '') + '</h3></div>' +
+        h += '<article class="vt-kart"><div class="vt-kart-ust"><span class="vt-no">' + (/^men[uü]\s*\d+/i.test(m.ad) ? esc(m.ad.replace(/^men[uü]\s*/i, '')) : (i + 1)) + '</span>' + (fiyatYaz(m) ? '<span class="vt-fyuk">(' + esc(fiyatYaz(m)) + ')<small>kişi başı</small></span>' : '') + '<h3>' + esc(m.ad) + (etTuru(m) ? ' <small class="vt-et">(' + esc(etTuru(m)) + ')</small>' : '') + '</h3></div>' +
           '<div class="vt-kart-ic">' +
           (etiket.length ? '<ul class="vt-etiket">' + etiket.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' : '') +
           (hz.length ? '<p class="vt-dahil"><b>' + hz.length + '</b> hizmet menüye dahil</p>' : '') +
-          (fiyatYaz(m) ? '<p class="vt-fiyat">(' + esc(fiyatYaz(m)) + ' <span>kişi başı</span>)' + (m.fiyat_notu ? '<small>' + esc(m.fiyat_notu) + '</small>' : '') + '</p>' : '') +
+          (m.fiyat_notu ? '<p class="vt-fiyat"><small>' + esc(m.fiyat_notu) + '</small></p>' : '') +
           '<div class="vt-kart-dugme"><button type="button" class="btn cizgi" data-menu="' + esc(m.id) + '">İncele</button><button type="button" class="btn ana" data-menusec="' + esc(m.id) + '">Teklif al</button></div></div></article>';
       });
       h += '</div></div></section>';

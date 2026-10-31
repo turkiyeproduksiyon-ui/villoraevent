@@ -620,3 +620,9 @@ input[type="date"] { min-height: 48px; width: 100%; box-sizing: border-box; }
 .btn.ig { color: #fff; border: 0; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
 .btn.ig .ik, .btn.ig svg { color: #fff; }
 .tarih-satir .tarih-sar { flex: 1 1 auto; min-width: 0; }
+
+.vt-fyuk { position: absolute; z-index: 2; right: 14px; top: 16px; display: grid; justify-items: end; padding: 6px 10px; border-radius: 12px; background: rgba(255, 255, 255, .2); color: #fff; font: 700 14px/1.15 var(--sans, inherit); white-space: nowrap; backdrop-filter: blur(2px); }
+.vt-fyuk small { font-size: 11px; font-weight: 500; opacity: .9; }
+.dg2-kapak-yazi em { font: 700 5.6cqw/1 'Caveat', cursive; font-style: normal; }
+.dg2-kapak-yazi b { font: 700 10cqw/.95 'Caveat', cursive; }
+.dg2-kapak-yazi span { font: 700 5cqw/1 'Caveat', cursive; }
