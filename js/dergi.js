@@ -83,6 +83,30 @@
     var X = IC.x * W, Y = IC.y * H, GW = IC.w * W, GH = IC.h * H;
     return sb.alan.map(function (a) { return [X + a[0] * GW, Y + a[1] * GH, a[2] * GW, a[3] * GH]; });
   }
+  /* Sayfanın tam ortasında ince, sade yazı bandı: çift adı, Düğün hikayemiz, tarih */
+  function merkezYazi(ctx, bilgi, T, cy) {
+    var bh = 420, g = ctx.createLinearGradient(0, cy - bh / 2, 0, cy + bh / 2);
+    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(0.28, 'rgba(0,0,0,.34)'); g.addColorStop(0.72, 'rgba(0,0,0,.34)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, cy - bh / 2, W, bh);
+    ctx.save(); ctx.textAlign = 'center'; ctx.fillStyle = T.kYazi; ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = 12;
+    var y = cy - (bilgi.ad ? 40 : 0);
+    if (bilgi.ad) { sigdir(ctx, bilgi.ad, '400 74px ' + SERIF, W - 220); try { ctx.letterSpacing = '2px'; } catch (e0) { /* eski tarayıcı */ } ctx.fillText(bilgi.ad, W / 2, y); try { ctx.letterSpacing = '0px'; } catch (e1) { /* önemsiz */ } y += 62; }
+    ctx.font = 'italic 400 44px ' + SERIF; ctx.fillText('Düğün hikayemiz', W / 2, y);
+    if (bilgi.tarih) { try { ctx.letterSpacing = '3px'; } catch (e2) { /* önemsiz */ } ctx.font = '400 32px ' + SANS; ctx.fillText(bilgi.tarih, W / 2, y + 64); try { ctx.letterSpacing = '0px'; } catch (e3) { /* önemsiz */ } }
+    ctx.restore();
+  }
+  /* Arka kapak altı: Evliliğe Evet logosu (img/evlilige-evet-logo.png varsa o, yoksa sade halka işareti) */
+  function markaCiz(ctx, bilgi, T, cx, cy) {
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 8; ctx.fillStyle = T.kYazi; ctx.strokeStyle = T.kYazi; ctx.textAlign = 'center';
+    if (bilgi.marka) {
+      var h = 64, w = bilgi.marka.width * h / bilgi.marka.height; ctx.drawImage(bilgi.marka, cx - w / 2, cy - h / 2 - 14, w, h);
+      ctx.font = '22px ' + SANS; ctx.fillText('Evliliğe Evet', cx, cy + 50);
+    } else {
+      ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx - 13, cy - 26, 17, 0, 6.283); ctx.stroke(); ctx.beginPath(); ctx.arc(cx + 13, cy - 26, 17, 0, 6.283); ctx.stroke();
+      ctx.font = '34px ' + SERIF; ctx.fillText('Evliliğe Evet', cx, cy + 36);
+    }
+    ctx.restore();
+  }
   async function sayfaCiz(ctx, sayfa, no, toplam, bilgi, acc0) {
     var T = TEMA[bilgi.tema] || TEMA.klasik, acc = T.acc || acc0, SF = T.serif;
     var sb = SABLON[sayfa.t], kapak = sayfa.t === 'kapak', px = alanPx(sb, sayfa);
@@ -100,23 +124,19 @@
       }
     }
     if (kapak) {
-      var g = ctx.createLinearGradient(0, H * 0.45, 0, H); g.addColorStop(0, T.kA); g.addColorStop(1, T.kB);
-      ctx.fillStyle = g; ctx.fillRect(0, H * 0.45, W, H * 0.55);
-      if (T.kapakGolge) { ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 24; }
       if (bilgi.tema === 'luks') { ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 4; ctx.strokeRect(40, 40, W - 80, H - 80); }
-      ctx.fillStyle = T.kYazi; ctx.textAlign = 'left'; ctx.font = '40px ' + SF; ctx.fillText(bilgi.mekan, 90, 120);
-      if (bilgi.ad) { sigdir(ctx, bilgi.ad, '150px Caveat, cursive', W - 180); ctx.fillText(bilgi.ad, 90, H - 340); }
-      ctx.font = (bilgi.ad ? '84px' : '130px') + ' Caveat, cursive'; ctx.fillText('Düğün hikayemiz', 90, H - 230);
-      ctx.fillRect(90, H - 195, 140, 4);
-      if (bilgi.tarih) { ctx.font = '64px Caveat, cursive'; ctx.fillText(bilgi.tarih, 90, H - 120); }
+      ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 14;
+      ctx.fillStyle = T.kYazi; ctx.textAlign = 'left'; ctx.font = '36px ' + SF; ctx.fillText(bilgi.mekan, 90, 118);
       ctx.shadowBlur = 0;
+      merkezYazi(ctx, bilgi, T, H / 2);
     } else if (arka) {
-      var g2 = ctx.createLinearGradient(0, H * 0.7, 0, H); g2.addColorStop(0, T.kA); g2.addColorStop(1, T.kB);
-      ctx.fillStyle = g2; ctx.fillRect(0, H * 0.7, W, H * 0.3);
-      if (T.kapakGolge) { ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 24; }
-      ctx.fillStyle = T.kYazi; ctx.textAlign = 'center'; ctx.font = '64px ' + SF; ctx.fillText('Teşekkürler', W / 2, H - 175);
-      ctx.font = '34px ' + SF; ctx.fillText(bilgi.mekan, W / 2, H - 120);
-      ctx.font = '26px ' + SANS; ctx.fillText([bilgi.telefon, bilgi.instagram].filter(Boolean).join('   '), W / 2, H - 70); ctx.textAlign = 'left'; ctx.shadowBlur = 0;
+      var g2 = ctx.createLinearGradient(0, H * 0.72, 0, H); g2.addColorStop(0, T.kA); g2.addColorStop(1, T.kB);
+      ctx.fillStyle = g2; ctx.fillRect(0, H * 0.72, W, H * 0.28);
+      merkezYazi(ctx, bilgi, T, H / 2);
+      ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 12;
+      ctx.fillStyle = T.kYazi; ctx.textAlign = 'center'; ctx.font = '30px ' + SF; ctx.fillText(bilgi.mekan, W / 2, H - 215);
+      ctx.font = '24px ' + SANS; ctx.fillText([bilgi.telefon, bilgi.instagram].filter(Boolean).join('   '), W / 2, H - 175);
+      ctx.shadowBlur = 0; markaCiz(ctx, bilgi, T, W / 2, H - 95); ctx.textAlign = 'left';
     } else if (tamS) {
       ctx.fillStyle = '#fff'; ctx.textAlign = 'right'; ctx.font = '28px ' + SANS; ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = 8;
       ctx.fillText(String(no), W - 60, H - 50); ctx.shadowBlur = 0; ctx.textAlign = 'left';
@@ -136,6 +156,7 @@
     ctx.font = '32px ' + SANS; ctx.fillText([bilgi.telefon, bilgi.instagram].filter(Boolean).join('   '), W / 2, H / 2 + 150);
   }
   async function uret(sayfalar, bilgi, ilerle) {
+    try { bilgi.marka = await yukle('img/evlilige-evet-logo.png'); } catch (em) { bilgi.marka = null; }
     try { await document.fonts.load('700 100px Caveat', bilgi.baslik + ' 0123456789ĞÜŞİÖÇğüşıöç'); } catch (ef) { /* yazı tipi yoksa yedek yazı */ }
     var acc = (getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#c83263').trim() || '#c83263';
     var cv = document.createElement('canvas'); cv.width = W; cv.height = H;

@@ -626,3 +626,9 @@ input[type="date"] { min-height: 48px; width: 100%; box-sizing: border-box; }
 .dg2-kapak-yazi em { font: 700 5.6cqw/1 'Caveat', cursive; font-style: normal; }
 .dg2-kapak-yazi b { font: 700 10cqw/.95 'Caveat', cursive; }
 .dg2-kapak-yazi span { font: 700 5cqw/1 'Caveat', cursive; }
+
+/* Foto Dergi kapak önizleme: ortada ince yazı */
+.dg2-kapak-yazi { left: 6%; right: 6%; top: 50%; bottom: auto; transform: translateY(-50%); text-align: center; justify-items: center; padding: 3.5cqw 0; background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,.34) 28%, rgba(0,0,0,.34) 72%, rgba(0,0,0,0)); text-shadow: 0 1px 6px rgba(0,0,0,.6); }
+.dg2-kapak-yazi b { font: 400 5.6cqw/1.15 Georgia, "Times New Roman", serif; letter-spacing: .12em; }
+.dg2-kapak-yazi em { font: italic 400 3.4cqw/1.2 Georgia, "Times New Roman", serif; }
+.dg2-kapak-yazi span { font: 400 2.5cqw/1.2 system-ui, sans-serif; letter-spacing: .14em; }
