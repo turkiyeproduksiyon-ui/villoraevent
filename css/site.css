@@ -585,3 +585,33 @@
 .dg2-tuval.t-luks:not(.kapak) .dg2-ust-yazi, .dg2-tuval.t-luks:not(.kapak) .dg2-alt-yazi { color: #cdb57a; }
 .dg2-tuval.t-minimal:not(.kapak) { background: #fff; }
 .dg2-tuval.t-minimal:not(.kapak) .dg2-alan { border: 9px solid #fff; box-sizing: border-box; }
+
+/* v40: mobil eşit butonlar */
+@media (max-width: 700px) {
+  .acilis .satir { flex-wrap: nowrap; gap: 8px; }
+  .acilis .satir .btn { flex: 1 1 0; min-width: 0; padding: 0 6px; justify-content: center; white-space: nowrap; font-size: 15px; }
+  .vt-band-dugme { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vt-band-dugme .btn { width: 100%; justify-content: center; }
+}
+/* tarih kutusu: telefonda boşken yazı görünsün */
+input[type="date"] { min-height: 48px; width: 100%; box-sizing: border-box; }
+@supports (-webkit-touch-callout: none) {
+  input[type="date"] { -webkit-appearance: none; appearance: none; display: block; text-align: left; }
+  input[type="date"]:not(.dolu):not(:focus)::before { content: attr(data-ph); color: #8a8a94; }
+  input[type="date"]:not(.dolu):not(:focus)::-webkit-datetime-edit { display: none; }
+}
+.vt-fiyat { margin: 0; font-size: 15px; color: var(--ink); }
+.vt-fiyat b { color: var(--accent); font-size: 17px; }
+.vt-fiyat small, .menu-fnot { display: block; color: var(--ink-2); font-size: 13px; margin-top: 2px; }
+/* Foto Dergi: dokunmayla kaydırma ve el yazısı */
+.dg2-tuval, .dg2-alan { touch-action: pan-y; }
+.dg2-alan.sec { touch-action: none; }
+.dg2-kapak-yazi b { font: 700 13cqw/.95 'Caveat', cursive; }
+.dg2-kapak-yazi span { font: 700 6.5cqw/1 'Caveat', cursive; }
+.dg2.t-modern .dg-mini { background: #fff; } .dg2.t-modern .dg-mini i { background: #111; }
+.dg2.t-romantik .dg-mini { background: #fbf1ea; } .dg2.t-romantik .dg-mini i { background: #d9a1a8; border-color: #fff; }
+.dg2.t-luks .dg-mini { background: #17130f; border-color: #3a3020; } .dg2.t-luks .dg-mini i { background: #17130f; border: 1px solid #d4af37; }
+.dg2.t-minimal .dg-mini { background: #fff; } .dg2.t-minimal .dg-mini i { background: #cfd3d7; }
+.dg2.t-luks .dg2-sk, .dg2.t-luks .dg2-sb { background: #17130f; color: #cdb57a; }
+.dg2.t-luks .dg2-sb small, .dg2.t-luks .dg2-sk small { color: #cdb57a; }
+.dg2.t-modern .dg2-sb.ak, .dg2.t-modern .dg2-sk.ak { border-color: #111; }

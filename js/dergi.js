@@ -52,7 +52,7 @@
   function jpeg(canvas) {
     return new Promise(function (res, rej) { canvas.toBlob(function (b) { if (!b) return rej(new Error('Sayfa oluşturulamadı')); b.arrayBuffer().then(function (ab) { res(new Uint8Array(ab)); }); }, 'image/jpeg', 0.84); });
   }
-  function sigdir(ctx, metin, font, gen) { var p = parseInt(font, 10); ctx.font = font; while (ctx.measureText(metin).width > gen && p > 28) { p -= 4; ctx.font = font.replace(/\d+px/, p + 'px'); } }
+  function sigdir(ctx, metin, font, gen) { var p = parseInt((font.match(/(\d+)px/) || [])[1], 10); ctx.font = font; while (ctx.measureText(metin).width > gen && p > 28) { p -= 4; ctx.font = font.replace(/\d+px/, p + 'px'); } }
 
   /* ---- Çok sade PDF yazıcı: her sayfa tek JPEG ---- */
   function pdfYap(sayfalar) {
@@ -105,8 +105,8 @@
       if (T.kapakGolge) { ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 24; }
       if (bilgi.tema === 'luks') { ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 4; ctx.strokeRect(40, 40, W - 80, H - 80); }
       ctx.fillStyle = T.kYazi; ctx.textAlign = 'left'; ctx.font = '40px ' + SF; ctx.fillText(bilgi.mekan, 90, 120);
-      sigdir(ctx, bilgi.baslik, '120px ' + SF, W - 180); ctx.fillText(bilgi.baslik, 90, H - 270);
-      ctx.fillRect(90, H - 235, 160, 5); ctx.font = '46px ' + SANS; ctx.fillText(bilgi.tarih || 'Anı dergisi', 90, H - 165); ctx.shadowBlur = 0;
+      sigdir(ctx, bilgi.baslik, '190px Caveat, cursive', W - 180); ctx.fillText(bilgi.baslik, 90, H - 270);
+      ctx.fillRect(90, H - 235, 160, 5); ctx.font = '72px Caveat, cursive'; ctx.fillText(bilgi.tarih || 'Anı dergisi', 90, H - 150); ctx.shadowBlur = 0;
     } else if (arka) {
       var g2 = ctx.createLinearGradient(0, H * 0.7, 0, H); g2.addColorStop(0, T.kA); g2.addColorStop(1, T.kB);
       ctx.fillStyle = g2; ctx.fillRect(0, H * 0.7, W, H * 0.3);
@@ -133,6 +133,7 @@
     ctx.font = '32px ' + SANS; ctx.fillText([bilgi.telefon, bilgi.instagram].filter(Boolean).join('   '), W / 2, H / 2 + 150);
   }
   async function uret(sayfalar, bilgi, ilerle) {
+    try { await document.fonts.load('700 100px Caveat', bilgi.baslik + ' 0123456789ĞÜŞİÖÇğüşıöç'); } catch (ef) { /* yazı tipi yoksa yedek yazı */ }
     var acc = (getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#c83263').trim() || '#c83263';
     var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     sayfalar = sayfalar.filter(function (p, i) { if (i === 0) return true; var n = SABLON[p.t].alan.length; for (var k = 0; k < n; k++) if (p.f[k]) return true; return false; });
@@ -167,7 +168,7 @@
     var sablonKucuk = function (id) {
       return '<span class="dg-mini' + (SABLON[id].cift ? ' cift' : '') + '">' + SABLON[id].alan.map(function (a) { return '<i style="left:' + (a[0] * 100) + '%;top:' + (a[1] * 100) + '%;width:' + (a[2] * 100) + '%;height:' + (a[3] * 100) + '%"></i>'; }).join('') + '</span>';
     };
-    var h = '<div class="dg2"><p class="not" style="margin:0 0 12px">Dergi hazır: kapak, arka kapak ve aradaki sayfalarda toplam 30 fotoğraf yeri var. Dergi ortasındaki çift sayfa tek fotoğrafla iki sayfayı kaplar; dergiyi iki elinizle açınca bütün görünür. Tam sayfalar kenarsızdır. Boş bıraktığınız çerçeveler ve hiç fotoğraf konmayan sayfalar PDF dışında kalır. Sayfa şablonunu değiştirebilirsiniz, fotoğrafı çerçevenin içine bırakın ya da çerçeveye dokunup seçin. Fotoğrafı parmağınızla kaydırıp yakınlaştırarak istediğiniz kısmı gösterin. Sonunda PDF olarak indirin. Fotoğraflar yalnızca cihazınızda işlenir, hiçbir yere yüklenmez.</p>' +
+    var h = '<div class="dg2 t-klasik"><p class="not" style="margin:0 0 12px">Dergi hazır: kapak, arka kapak ve aradaki sayfalarda toplam 30 fotoğraf yeri var. Dergi ortasındaki çift sayfa tek fotoğrafla iki sayfayı kaplar; dergiyi iki elinizle açınca bütün görünür. Tam sayfalar kenarsızdır. Boş bıraktığınız çerçeveler ve hiç fotoğraf konmayan sayfalar PDF dışında kalır. Sayfa şablonunu değiştirebilirsiniz, fotoğrafı çerçevenin içine bırakın ya da çerçeveye dokunup seçin. Fotoğrafı parmağınızla kaydırıp yakınlaştırarak istediğiniz kısmı gösterin. Sonunda PDF olarak indirin. Fotoğraflar yalnızca cihazınızda işlenir, hiçbir yere yüklenmez.</p>' +
       '<div class="ikili"><label class="alan"><span>Çift adı</span><input id="dgAd" maxlength="60" placeholder="Ayşe & Ali"></label><label class="alan"><span>Düğün tarihi</span><input id="dgTarih" type="date"></label></div>' +
       '<div class="dg2-temalar" role="radiogroup" aria-label="Dergi tasarımı">' + Object.keys(TEMA).map(function (k) { return '<button type="button" class="dg2-tema' + (k === 'klasik' ? ' ak' : '') + '" data-tema="' + k + '"><span class="dg2-tm t-' + k + '"><i></i><i></i></span><small>' + esc(TEMA[k].ad) + '</small></button>'; }).join('') + '</div>' +
       '<div class="dg2-seritler"><div class="dg2-sayfalar" id="dgSayfalar"></div></div>' +
@@ -231,7 +232,7 @@
         h2 += '<div class="dg2-yakin"><label>Yakınlaştır<input type="range" id="dgZoom" min="1" max="3" step="0.02" value="' + f.zoom + '"></label>' +
           '<button type="button" class="btn hafif kucuk" id="dgDegis">Fotoğrafı değiştir</button><button type="button" class="btn tehlike kucuk" id="dgKaldir">Kaldır</button></div>' +
           '<p class="not" style="margin:6px 0 0">Fotoğrafı çerçevenin içinde parmağınızla kaydırarak kırpın.</p>';
-      } else if (S.slot !== null) { h2 += '<p class="not" style="margin:0">Boş çerçeveye dokunup fotoğraf seçin ya da fotoğrafı üzerine sürükleyin.</p>'; }
+      } else if (S.slot !== null) { h2 += '<button type="button" class="btn ana tam" id="dgEkle">Fotoğraf ekle</button><p class="not" style="margin:8px 0 0">Ya da fotoğrafı çerçevenin üzerine sürükleyin.</p>'; }
       else h2 += '<p class="not" style="margin:0">Bir çerçeveye dokunun.</p>';
       kontrol.innerHTML = h2;
     }
@@ -247,12 +248,14 @@
     $('.dg2-temalar').addEventListener('click', function (e) {
       var b = e.target.closest('[data-tema]'); if (!b) return; S.tema = b.getAttribute('data-tema');
       Array.prototype.forEach.call(ic.querySelectorAll('.dg2-tema'), function (x) { x.classList.toggle('ak', x === b); });
+      var kap = ic.querySelector('.dg2'); if (kap) kap.className = 'dg2 t-' + S.tema;
       tuvalCiz();
     });
     serit.addEventListener('click', function (e) { var b = e.target.closest('[data-s]'); if (b) sec(+b.getAttribute('data-s')); });
     kontrol.addEventListener('click', function (e) {
       var b = e.target.closest('[data-sb]'), p = S.sayfalar[S.sec];
       if (b) { p.t = b.getAttribute('data-sb'); S.slot = null; tuvalCiz(); return; }
+      if (e.target.id === 'dgEkle') { hedef = { p: p, i: S.slot }; $('#dgDosya').click(); }
       if (e.target.id === 'dgDegis') { hedef = { p: p, i: S.slot }; $('#dgDosya').click(); }
       if (e.target.id === 'dgKaldir') { var f = p.f[S.slot]; if (f) URL.revokeObjectURL(f.url); p.f[S.slot] = null; tuvalCiz(); }
     });
@@ -288,11 +291,11 @@
     tuval.addEventListener('pointerdown', function (e) {
       var el = e.target.closest('.dg2-alan'); if (!el) return;
       var i = +el.getAttribute('data-i'), p = S.sayfalar[S.sec], f = p.f[i];
-      surukle = { el: el, i: i, x: e.clientX, y: e.clientY, tasindi: false, f: f };
+      surukle = { el: el, i: i, x: e.clientX, y: e.clientY, tasindi: false, f: f, dokunma: e.pointerType !== 'mouse' };
       if (f) { try { el.setPointerCapture(e.pointerId); } catch (x) { /* önemsiz */ } }
     });
     tuval.addEventListener('pointermove', function (e) {
-      if (!surukle || !surukle.f) return;
+      if (!surukle || !surukle.f || S.slot !== surukle.i) return;
       var dx = e.clientX - surukle.x, dy = e.clientY - surukle.y;
       if (!surukle.tasindi && Math.abs(dx) + Math.abs(dy) < 5) return;
       surukle.tasindi = true; surukle.x = e.clientX; surukle.y = e.clientY;
@@ -305,8 +308,9 @@
     tuval.addEventListener('pointerup', function () {
       if (!surukle) return; var d = surukle; surukle = null; if (d.tasindi) return;
       var p = S.sayfalar[S.sec]; S.slot = d.i; tuvalCiz();
-      if (!p.f[d.i]) { hedef = { p: p, i: d.i }; $('#dgDosya').click(); }
+      if (!p.f[d.i] && !d.dokunma) { hedef = { p: p, i: d.i }; $('#dgDosya').click(); }
     });
+    tuval.addEventListener('pointercancel', function () { surukle = null; });
     tuval.addEventListener('dragover', function (e) { if (e.target.closest('.dg2-alan')) { e.preventDefault(); e.target.closest('.dg2-alan').classList.add('uzerinde'); } });
     tuval.addEventListener('dragleave', function (e) { var a = e.target.closest('.dg2-alan'); if (a) a.classList.remove('uzerinde'); });
     tuval.addEventListener('drop', async function (e) {

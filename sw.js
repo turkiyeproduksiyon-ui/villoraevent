@@ -1,10 +1,10 @@
 /* Villora Event: ana ekrana eklenebilir uygulama (PWA).
    Önce internetten taze dosya alınır; internet yoksa hafızadaki kopya ya da çevrimdışı sayfası gösterilir.
    Her site güncellemesinde aşağıdaki numarayı artır: telefondaki uygulama eski hafızayı atıp yenisini alır. */
-const CACHE_NAME = "villora-v39";
+const CACHE_NAME = "villora-v40";
 const ASSETS = [
   "./index.html", "./admin.html", "./offline.html",
-  "./css/ortak.css", "./css/site.css", "./css/admin.css",
+  "./css/ortak.css", "./css/site.css", "./css/admin.css", "./fonts/el-yazisi.css",
   "./js/supabase.js", "./js/config.js", "./js/ortak.js", "./js/site.js", "./js/shorts.js", "./js/dergi.js", "./js/admin.js", "./js/sozlesme.js",
   "./img/logo.png", "./img/logo-isaret.png", "./img/icon-192.png", "./img/icon-512.png"
 ];
