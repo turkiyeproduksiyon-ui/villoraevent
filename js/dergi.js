@@ -238,12 +238,15 @@
           return '<div class="dg2-alan' + (f ? ' dolu' : '') + (S.slot === i ? ' sec' : '') + '" data-i="' + i + '" style="left:' + (a[0] * 100) + '%;top:' + (a[1] * 100) + '%;width:' + (a[2] * 100) + '%;height:' + (a[3] * 100) + '%">' +
             (f ? '<img src="' + f.url + '" alt="" draggable="false">' : '<span class="dg2-bos">Fotoğraf ekle</span>') + '</div>';
         }).join('') + '</div>' +
-        (kapak ? '<div class="dg2-kapak-yazi"><b id="dgKapakAd"></b><em>Düğün hikayemiz</em><span id="dgKapakTarih"></span></div>' : '');
+        (kapak ? '<div class="dg2-kapak-yazi"><b id="dgKapakAd"></b><em>Düğün hikayemiz</em><span id="dgKapakTarih"></span></div>' : '') +
+        (p.t === 'arka' ? '<div class="dg2-arka-grad" style="background:linear-gradient(to bottom,' + (TEMA[S.tema] || TEMA.klasik).kA + ',' + (TEMA[S.tema] || TEMA.klasik).kB + ')"></div>' +
+          '<div class="dg2-kapak-yazi dg2-arka-yazi"><b id="dgArkaAd"></b><em>Düğün hikayemiz</em><span id="dgArkaTarih"></span>' +
+          '<small class="dg2-arka-m">' + esc(M.ad) + (M.telefon ? ' · ' + esc(M.telefon) : '') + '</small><img class="dg2-arka-logo" src="' + MARKA_LOGO + '" alt=""></div>' : '');
       yaziGuncelle(); yerles(); kontrolCiz(); seritCiz();
     }
     function yaziGuncelle() {
       var ad = adTemiz(S.ad) || 'Düğün hikayemiz', t = trTarih(S.tarih);
-      var a = $('#dgKapakAd'), b = $('#dgKapakTarih'), c = $('#dgAdYazi'); if (a) { a.textContent = adTemiz(S.ad); a.style.display = S.ad ? '' : 'none'; } if (b) b.textContent = t; if (c) c.textContent = ad;
+      var a = $('#dgKapakAd') || $('#dgArkaAd'), b = $('#dgKapakTarih') || $('#dgArkaTarih'), c = $('#dgAdYazi'); if (a) { a.textContent = adTemiz(S.ad); a.style.display = S.ad ? '' : 'none'; } if (b) b.textContent = t; if (c) c.textContent = ad;
     }
     function kontrolCiz() {
       var p = S.sayfalar[S.sec], h2 = '';

@@ -638,3 +638,8 @@ input[type="date"] { min-height: 48px; width: 100%; box-sizing: border-box; }
 .dg2-kapak-yazi b { font: 400 3.4cqw/1.2 Georgia, "Times New Roman", serif; letter-spacing: .06em; }
 .dg2-kapak-yazi em { font: italic 400 2.3cqw/1.25 Georgia, "Times New Roman", serif; }
 .dg2-kapak-yazi span { font: 400 1.8cqw/1.3 system-ui, sans-serif; letter-spacing: .14em; margin-top: 1px; }
+
+.dg2-arka-grad { position: absolute; left: 0; right: 0; bottom: 0; height: 30%; pointer-events: none; z-index: 2; }
+.dg2-arka-yazi { bottom: 4%; z-index: 3; }
+.dg2-arka-m { font: 400 1.7cqw/1.3 system-ui, sans-serif; margin-top: 1.8cqw; }
+.dg2-arka-logo { width: 34cqw; height: auto; margin-top: 1.6cqw; }
