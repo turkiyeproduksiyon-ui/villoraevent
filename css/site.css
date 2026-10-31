@@ -632,3 +632,9 @@ input[type="date"] { min-height: 48px; width: 100%; box-sizing: border-box; }
 .dg2-kapak-yazi b { font: 400 5.6cqw/1.15 Georgia, "Times New Roman", serif; letter-spacing: .12em; }
 .dg2-kapak-yazi em { font: italic 400 3.4cqw/1.2 Georgia, "Times New Roman", serif; }
 .dg2-kapak-yazi span { font: 400 2.5cqw/1.2 system-ui, sans-serif; letter-spacing: .14em; }
+
+/* Foto Dergi kapak önizleme: alt ortada küçük yazı, bant yok */
+.dg2-kapak-yazi { left: 6%; right: 6%; top: auto; bottom: 5.5%; transform: none; text-align: center; justify-items: center; padding: 0; gap: 1px; background: none; text-shadow: 0 1px 4px rgba(0,0,0,.4); }
+.dg2-kapak-yazi b { font: 400 3.4cqw/1.2 Georgia, "Times New Roman", serif; letter-spacing: .06em; }
+.dg2-kapak-yazi em { font: italic 400 2.3cqw/1.25 Georgia, "Times New Roman", serif; }
+.dg2-kapak-yazi span { font: 400 1.8cqw/1.3 system-ui, sans-serif; letter-spacing: .14em; margin-top: 1px; }
