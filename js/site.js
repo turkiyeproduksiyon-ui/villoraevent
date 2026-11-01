@@ -173,9 +173,10 @@
 
     /* ---- Yeni düzen: menü kartları, teklif bandı, ek hizmetler, iletişim ---- */
     function bolumAdi(t) { return String(t || '').replace(/\s*\(.*\)\s*$/, '').trim(); }
-    var EK = DENEYIM.slice(0, 1);
+    var DX = DENEYIM.filter(function (d) { return acik(d.k); });
+    var EK = DX.filter(function (d) { return d.k === 'dx_dugun'; });
     if (makyajVar && acik('makeup')) EK.push({ k: 'makyaj', ad: makyajBaslik, i: 'makyaj', y: 'Düğün öncesi hazırlığınızın her adımını aynı yerde rahatça planlayın.' });
-    EK = EK.concat(DENEYIM.slice(1));
+    EK = EK.concat(DX.filter(function (d) { return d.k !== 'dx_dugun'; }));
     if (acik('firmalar')) EK.push({ k: 'firmalar', ad: 'Anlaşmalı firmalar', i: 'el', y: 'Gelin arabası, çiçekçi, fotoğrafçı, gelinlikçi, bando ve catering. Çiftlerimize özel indirimler.' });
     if (acik('ciftlerimiz')) EK.push({ k: 'ciftler', ad: 'Çiftlerimiz', i: 'yildiz', y: 'Villora çiftlerinin fotoğrafları ve yorumları.' });
     if (acik('foto_dergi')) EK.push({ k: 'dergi', ad: 'Foto Dergi', i: 'galeri', y: 'Fotoğraflarınızı seçin, anı dergisini PDF olarak indirin. Yüklenmez, cihazınızda hazırlanır.' });
@@ -208,7 +209,7 @@
 
     if (acik('ciftlerimiz')) {
       var cfL = (D.ciftler || []).slice(0, 3);
-      h += '<section class="vt vt-ciftler"><div class="vt-kap"><div class="vt-baslik"><h2>Çiftlerimiz</h2><p>' + esc(M.ad) + ' çiftlerinin fotoğrafları ve yorumları.</p></div>' +
+      h += '<section class="vt vt-ciftler" id="ciftlerK"><div class="vt-kap"><div class="vt-baslik"><h2>Çiftlerimiz</h2><p>' + esc(M.ad) + ' çiftlerinin fotoğrafları ve yorumları.</p></div>' +
         (cfL.length ? '<div class="cf-liste">' + cfL.map(function (c) {
           var u = O.guvenliUrl(c.foto_url);
           return '<article class="cf-kart">' + (u ? '<img loading="lazy" src="' + esc(u) + '" alt="' + esc(c.ad) + '">' : '<div class="cf-fotosuz">' + ik('yildiz', 28) + '</div>') +
@@ -264,7 +265,7 @@
     if (M.eposta) fl += '<a href="mailto:' + esc(M.eposta) + '" aria-label="E-posta">' + ik('eposta', 22) + '</a>';
     if (harita) fl += '<a href="' + esc(harita) + '" target="_blank" rel="noopener" aria-label="Konum">' + ik('konum', 22) + '</a>';
     if (webUrl) fl += '<a href="' + esc(webUrl) + '" target="_blank" rel="noopener" aria-label="Web sitesi">' + ik('web', 22) + '</a>';
-    if (videolar.length) h += '<button type="button" class="shorts-serit" id="shortsAc" aria-label="Villora\'dan anılar videolarını aç"><span class="el" aria-hidden="true">👇</span><b>Villora\'dan anılar</b><span class="shorts-peekwrap" aria-hidden="true"><span class="shorts-peek">' + (videolar[0] && ytKapak(videolar[0].url) ? '<img src="' + esc(ytKapak(videolar[0].url)) + '" alt="">' : '') + '</span></span></button>';
+    if (videolar.length) h += '<button type="button" class="shorts-serit" id="shortsAc" aria-label="Villora\'dan anlar videolarını aç"><span class="el" aria-hidden="true">👇</span><b>Villora\'dan anlar</b><span class="shorts-peekwrap" aria-hidden="true"><span class="shorts-peek">' + (videolar[0] && ytKapak(videolar[0].url) ? '<img src="' + esc(ytKapak(videolar[0].url)) + '" alt="">' : '') + '</span></span></button>';
     var igMetin = String(M.instagram || ((window.AYAR && window.AYAR.VARSAYILAN) || {}).instagram || '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/[\/?].*$/, '').replace(/^@/, '');
     h += '<footer class="alt-bilgi"><div class="alt-ic">' +
       '<div class="alt-marka"><b>' + esc(M.ad) + '</b></div>' +
@@ -274,13 +275,41 @@
       '<div class="alt-alt"><span>© ' + new Date().getFullYear() + ' ' + esc(M.ad) + '</span>' +
       '<button type="button" id="kvkkAc">Aydınlatma metni</button></div></div>' +
       '</footer>' +
-      (videolar.length ? '<div class="shorts-overlay" id="shortsOverlay" aria-label="Villora\'dan anılar"><button type="button" class="shorts-kapat" id="shortsKapat" aria-label="Kapat">✕</button><div class="shorts-feed" id="shortsFeed"></div></div>' : '');
+      (videolar.length ? '<div class="shorts-overlay" id="shortsOverlay" aria-label="Villora\'dan anlar"><button type="button" class="shorts-kapat" id="shortsKapat" aria-label="Kapat">✕</button><div class="shorts-feed" id="shortsFeed"></div></div>' : '');
 
-    var nav = '<nav class="ust-nav" aria-label="Sayfa menüsü">';
-    ISLEMLER.forEach(function (x) { if (x.k !== 'teklif' && x.k !== 'talep' && x.k !== 'galeri') nav += '<button type="button" data-islem="' + x.k + '">' + esc(x.ad) + '</button>'; });
-    nav += '<button type="button" data-ankraj="iletisimK">İletişim</button>';
-    if (ozelAcik) nav += '<button type="button" data-ankraj="ozelK">Foto ve video indir</button>';
-    nav += '</nav>' + (acik('teklif') ? '<button type="button" class="btn ana kucuk ust-cta" data-islem="teklif">Teklif al</button>' : '');
+    /* Menü (hamburger): sayfa sırasıyla, açıklamalı */
+    var imajQm = imajFiligran ? '?ad=' + imajAd : '';
+    var MG = [];
+    function mg(b, o) { o = o.filter(Boolean); if (o.length) MG.push({ b: b, o: o }); }
+    mg('Villora', [
+      kesfetVar ? { ad: 'Villora\'yı Keşfedin', alt: 'Galeri, mekan özellikleri', i: 'galeri', a: 'galeriK' } : null,
+      EK.length ? { ad: 'Villora Deneyimi', alt: 'Düğün, nişan, evlilik teklifi ve özel günler', i: 'yildiz', a: 'deneyimK' } : null,
+      acik('dx_dugun') ? { ad: 'Düğün Günü Hazırlığı', alt: 'Gelin ve damada özel hazırlık alanları', i: 'yildiz', x: 'dx_dugun' } : null,
+      acik('dx_teklif') ? { ad: 'Evlilik Teklifi', alt: 'Villa ve bahçede size özel bir teklif', i: 'hediye', x: 'dx_teklif' } : null,
+      acik('dx_ozel') ? { ad: 'Özel Kutlamalar', alt: 'Doğum günü, yıl dönümü, özel buluşmalar', i: 'takvim', x: 'dx_ozel' } : null,
+      acik('dx_davet') ? { ad: 'Size Özel Davetler', alt: 'Hayatınızın dönüm noktaları', i: 'belge', x: 'dx_davet' } : null,
+      makyajVar && acik('makeup') ? { ad: makyajBaslik, alt: 'Düğün öncesi hazırlığın her adımı', i: 'makyaj', x: 'makyaj' } : null
+    ]);
+    mg('Paketler ve teklif', [
+      D.menu.length && acik('menu') ? { ad: 'Paketler', alt: 'Menüleri inceleyin, kişi başı fiyatları görün', i: 'tabak', a: 'menulerK' } : null,
+      acik('firmalar') ? { ad: 'Anlaşmalı firmalar', alt: 'Gelin arabası, çiçekçi, fotoğrafçı, bando, catering', i: 'el', x: 'firmalar' } : null,
+      acik('teklif') ? { ad: 'Teklif al', alt: 'Tarihinizi ve isteklerinizi iletin', i: 'belge', x: 'teklif', v: true } : null
+    ]);
+    mg('Çiftlerimiz', [
+      acik('ciftlerimiz') ? { ad: 'Villora çiftleri', alt: 'Fotoğraflar ve yorumlar', i: 'yildiz', x: 'ciftler' } : null
+    ]);
+    mg('Mini uygulamalar', [
+      acik('foto_dergi') ? { ad: 'Foto Dergi', alt: 'Anı dergisini PDF olarak hazırlayın', i: 'galeri', x: 'dergi' } : null,
+      fotoImajAcik ? { ad: 'Foto İmaj', alt: 'Fotoğraflarınıza çerçeve ve yazı ekleyin', i: 'galeri', u: 'foto-imaj.html' + imajQm } : null,
+      moviImajAcik ? { ad: 'Movi İmaj', alt: 'Videolarınızı kısaca kurgulayın', i: 'oynat', u: 'movi-imaj.html' + imajQm } : null,
+      ozelAcik ? { ad: 'Foto ve video indir', alt: 'Çiftlere özel, şifreyle giriş', i: 'indir', a: 'ozelK' } : null
+    ]);
+    mg('Hakkımızda ve iletişim', [
+      acik('hakkimizda') && M.hakkinda ? { ad: 'Hakkımızda', alt: 'Villora Event kimdir', i: 'yildiz', a: 'hakkimizdaK' } : null,
+      { ad: 'İletişim', alt: 'WhatsApp, telefon, adres ve harita', i: 'telefon', a: 'iletisimK' }
+    ]);
+    MENUG = MG;
+    var nav = (acik('teklif') ? '<button type="button" class="btn ana kucuk ust-cta" data-islem="teklif">Teklif al</button>' : '');
     h = h.replace('<!--NAV-->', nav);
     $('#uygulama').innerHTML = '<div class="sayfa">' + h + '</div>';
     VIDEOLAR = videolar;
@@ -302,6 +331,7 @@
     return '<div class="harita"><iframe title="' + esc(M.ad) + ' konumu" src="' + esc(src) + '" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe></div>';
   }
 
+  var MENUG = [];
   var ISLEMLER = [], VIDEOLAR = [], KLIPLER = [], GALERI = [], MAKYAJ = { foto: [], video: [] };
 
   /* Villora Deneyimi: düğün dışındaki hizmetler (tanıtım metinleri) */
@@ -440,17 +470,31 @@
     acikPencere = null;
   }
 
+  function ankrajaGit(id) {
+    var hd = document.getElementById(id); if (!hd) return;
+    var pn = hd.closest('.bolme');
+    if (pn && !pn.classList.contains('aktif') && !window.matchMedia('(min-width: 960px)').matches) sekmeAc(+pn.id.slice(1));
+    hd.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
   function menuPenceresi() {
-    var h = '<div class="menu-liste">';
-    ISLEMLER.forEach(function (x) { h += '<button data-m="' + x.k + '">' + ik(x.i) + esc(x.ad) + '</button>'; });
-    if ($('.sekme')) h += '<button data-m="_ozel">' + ik('hediye') + 'Mini uygulamalar</button>';
+    var duz = [], h = '<div class="menu-liste m-detay">';
+    MENUG.forEach(function (g) {
+      h += '<div class="m-grup"><h3>' + esc(g.b) + '</h3>';
+      g.o.forEach(function (o) {
+        duz.push(o);
+        h += '<button type="button" class="m-oge' + (o.v ? ' vurgu' : '') + '" data-mo="' + (duz.length - 1) + '">' + ik(o.i, 22) + '<span><b>' + esc(o.ad) + '</b><small>' + esc(o.alt) + '</small></span></button>';
+      });
+      h += '</div>';
+    });
     h += '</div>';
     var ic = pencere(M.ad, h);
     ic.addEventListener('click', function (e) {
-      var b = e.target.closest('[data-m]'); if (!b) return;
-      var k = b.getAttribute('data-m');
+      var b = e.target.closest('[data-mo]'); if (!b) return;
+      var o = duz[+b.getAttribute('data-mo')]; if (!o) return;
       kapatPencere();
-      if (k === '_ozel') sekmeAc(1); else islemCalistir(k);
+      if (o.x) islemCalistir(o.x);
+      else if (o.a) ankrajaGit(o.a);
+      else if (o.u) window.location.href = o.u;
     });
   }
 
@@ -527,7 +571,7 @@
     return '<div class="kalem"><div><div class="ad">' + esc(k.ad) + '</div>' + (k.aciklama ? '<div class="ac">' + esc(k.aciklama) + '</div>' : '') + '</div>' + fiyatMetni(k) + '</div>';
   }
   function gruplar() {
-    var g = D.kat.map(function (c) { return { ad: c.ad, kalemler: D.kalem.filter(function (k) { return k.kategori_id === c.id; }) }; });
+    var g = D.kat.map(function (c) { return { ad: /^make-?up$/i.test(String(c.ad).trim()) ? 'Saç ve makyaj' : c.ad, kalemler: D.kalem.filter(function (k) { return k.kategori_id === c.id; }) }; });
     var diger = D.kalem.filter(function (k) { return !k.kategori_id || !D.kat.some(function (c) { return c.id === k.kategori_id; }); });
     if (diger.length) g.push({ ad: g.length ? 'Diğer hizmetler' : 'Hizmetler', kalemler: diger });
     return g.filter(function (x) { return x.kalemler.length; });

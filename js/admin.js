@@ -668,8 +668,8 @@
   }
 
   /* ================= İÇERİK ================= */
-  var icerikAlt = 'fiyat';
-  var ALTLAR = [['fiyat', 'Fiyatlar'], ['menu', 'Menüler'], ['foto', 'Fotoğraflar'], ['video', 'Videolar'], ['makyaj', 'Make-up'], ['firma', 'Anlaşmalı firmalar'], ['ciftler', 'Çiftlerimiz'], ['ozellik', 'Mekan özellikleri'], ['salon', 'Salonlar'], ['sozlesme', 'Sözleşme']];
+  var icerikAlt = 'foto';
+  var ALTLAR = [['foto', 'Fotoğraflar'], ['ozellik', 'Mekan özellikleri'], ['menu', 'Paketler'], ['makyaj', 'Saç ve makyaj'], ['firma', 'Anlaşmalı firmalar'], ['ciftler', 'Villora çiftleri'], ['video', 'Villora\'dan anlar'], ['salon', 'Salonlar'], ['fiyat', 'Teklif kalemleri'], ['sozlesme', 'Sözleşme']];
   function icerikCiz() {
     aktifSayfa().innerHTML = '<div class="alt-sekme" role="tablist">' + ALTLAR.map(function (a) { return '<button role="tab" data-a="' + a[0] + '" aria-selected="' + (a[0] === icerikAlt) + '">' + a[1] + '</button>'; }).join('') + '</div><div id="altIc"></div>';
     $('.alt-sekme').addEventListener('click', function (e) {
@@ -722,30 +722,30 @@
   var AKTIF = { k: 'aktif', e: 'Sitede göster', t: 'bool', v: true };
   var CFG = {
     salon: { tablo: 'salonlar', baslik: 'Salonlar', tek: 'salon', alanlar: [{ k: 'ad', e: 'Salon adı', t: 'text', zor: true }, { k: 'kapasite', e: 'Kapasite (kişi)', t: 'number' }, SIRA, AKTIF], satir: function (r) { return [r.ad, r.kapasite ? r.kapasite + ' kişi' : '']; } },
-    kat: { tablo: 'fiyat_kategorileri', baslik: 'Fiyat kategorileri', tek: 'kategori', aciklama: 'Örnek: Yemek, Organizasyon, Müzik. Fiyat kalemlerini bu başlıklar altında gruplarsınız.', alanlar: [{ k: 'ad', e: 'Kategori adı', t: 'text', zor: true }, SIRA, AKTIF], satir: function (r) { return [r.ad, '']; } },
-    kalem: { tablo: 'fiyat_kalemleri', baslik: 'Fiyat kalemleri', tek: 'kalem', aciklama: 'Müşterinin sitede gördüğü ve teklifte seçtiği hizmetler. Fiyatı boş bırakırsanız sitede "Teklif alınız" yazar.',
+    kat: { tablo: 'fiyat_kategorileri', baslik: 'Teklif kategorileri', tek: 'kategori', aciklama: 'Örnek: Yemek, Organizasyon, Müzik. Fiyat kalemlerini bu başlıklar altında gruplarsınız.', alanlar: [{ k: 'ad', e: 'Kategori adı', t: 'text', zor: true }, SIRA, AKTIF], satir: function (r) { return [r.ad, '']; } },
+    kalem: { tablo: 'fiyat_kalemleri', baslik: 'Teklif kalemleri', tek: 'kalem', aciklama: 'Müşterinin sitede gördüğü ve teklifte seçtiği hizmetler. Fiyatı boş bırakırsanız sitede "Teklif alınız" yazar.',
       alanlar: function () { return [{ k: 'ad', e: 'Hizmet adı', t: 'text', zor: true }, { k: 'kategori_id', e: 'Kategori', t: 'select', opt: [['', 'Kategorisiz']].concat(D.kat.map(function (c) { return [c.id, c.ad]; })) }, { k: 'aciklama', e: 'Kısa açıklama', t: 'textarea' },
         { k: 'fiyat', e: 'Fiyat (TL)', t: 'money', yardim: 'Boş bırakırsanız "Teklif alınız" yazar.' }, { k: 'birim', e: 'Fiyat türü', t: 'select', v: 'sabit', opt: [['sabit', 'Sabit ücret'], ['kisi_basi', 'Kişi başı'], ['adet', 'Adet başı']] }, SIRA, AKTIF]; },
       satir: function (r) { var c = D.kat.filter(function (x) { return x.id === r.kategori_id; })[0]; return [r.ad, (c ? c.ad + ' · ' : '') + (r.fiyat == null ? 'Teklif alınız' : O.para(r.fiyat) + (r.birim === 'kisi_basi' ? ' / kişi' : r.birim === 'adet' ? ' / adet' : ''))]; } },
-    menu: { tablo: 'menuler', baslik: 'Menüler', tek: 'menü', alanlar: [{ k: 'ad', e: 'Menü adı', t: 'text', zor: true, ornek: 'Menü 1' }, { k: 'aciklama', e: 'Kısa açıklama', t: 'textarea' }, { k: 'icerik', e: 'Menü içeriği', t: 'textarea', satir: 14, yardim: 'Başlığı [köşeli parantez] içinde yazın, altına her satıra bir yemek yazın. Örnek: [Ana yemek] satırının altına Et kavurma.' }, { k: 'dahil_hizmetler', e: 'Dahil hizmetler (her satıra bir hizmet)', t: 'textarea', satir: 9 }, { k: 'not_metni', e: 'Menü notu (sitede ve sözleşmede görünür)', t: 'textarea', satir: 3 }, { k: 'fiyat_kisi', e: 'Kişi başı fiyat (TL), aralık varsa en düşük', t: 'money', yardim: 'Boş bırakırsanız fiyat sitede görünmez, sözleşme bedeline menü eklenmez.' }, { k: 'fiyat_kisi_max', e: 'Kişi başı en yüksek fiyat (TL, isteğe bağlı)', t: 'money', yardim: 'Fiyat aralığı için doldurun, sitede "1.200 - 1.500 TL kişi başı" yazar. Aralık yoksa boş bırakın.' }, { k: 'fiyat_notu', e: 'Fiyat notu (isteğe bağlı)', t: 'text', yardim: 'Örnek: 300 kişiye kadar. Fiyatın altında küçük yazı olarak görünür.' }, SIRA, AKTIF], satir: function (r) { return [r.ad, r.fiyat_kisi == null ? '' : O.para(r.fiyat_kisi) + (r.fiyat_kisi_max ? ' - ' + O.para(r.fiyat_kisi_max) : '') + ' / kişi']; } },
-    ozellik: { tablo: 'ozellikler', baslik: 'Mekan özellikleri', tek: 'özellik', alanlar: [{ k: 'baslik', e: 'Başlık', t: 'text', zor: true, ornek: 'Otopark' }, { k: 'aciklama', e: 'Açıklama', t: 'textarea' }, SIRA, AKTIF], satir: function (r) { return [r.baslik, r.aciklama || '']; } },
+    menu: { tablo: 'menuler', baslik: 'Paketler (menüler)', tek: 'menü', alanlar: [{ k: 'ad', e: 'Menü adı', t: 'text', zor: true, ornek: 'Menü 1' }, { k: 'aciklama', e: 'Kısa açıklama', t: 'textarea' }, { k: 'icerik', e: 'Menü içeriği', t: 'textarea', satir: 14, yardim: 'Başlığı [köşeli parantez] içinde yazın, altına her satıra bir yemek yazın. Örnek: [Ana yemek] satırının altına Et kavurma.' }, { k: 'dahil_hizmetler', e: 'Dahil hizmetler (her satıra bir hizmet)', t: 'textarea', satir: 9 }, { k: 'not_metni', e: 'Menü notu (sitede ve sözleşmede görünür)', t: 'textarea', satir: 3 }, { k: 'fiyat_kisi', e: 'Kişi başı fiyat (TL), aralık varsa en düşük', t: 'money', yardim: 'Boş bırakırsanız fiyat sitede görünmez, sözleşme bedeline menü eklenmez.' }, { k: 'fiyat_kisi_max', e: 'Kişi başı en yüksek fiyat (TL, isteğe bağlı)', t: 'money', yardim: 'Fiyat aralığı için doldurun, sitede "1.200 - 1.500 TL kişi başı" yazar. Aralık yoksa boş bırakın.' }, { k: 'fiyat_notu', e: 'Fiyat notu (isteğe bağlı)', t: 'text', yardim: 'Örnek: 300 kişiye kadar. Fiyatın altında küçük yazı olarak görünür.' }, SIRA, AKTIF], satir: function (r) { return [r.ad, r.fiyat_kisi == null ? '' : O.para(r.fiyat_kisi) + (r.fiyat_kisi_max ? ' - ' + O.para(r.fiyat_kisi_max) : '') + ' / kişi']; } },
+    ozellik: { tablo: 'ozellikler', baslik: 'Mekan özellikleri', tek: 'özellik', aciklama: 'Sitede "Villora\'yı Keşfedin" bölümünde etiket olarak görünür.', alanlar: [{ k: 'baslik', e: 'Başlık', t: 'text', zor: true, ornek: 'Otopark' }, { k: 'aciklama', e: 'Açıklama', t: 'textarea' }, SIRA, AKTIF], satir: function (r) { return [r.baslik, r.aciklama || '']; } },
     firma: { tablo: 'anlasmali_firmalar', baslik: 'Anlaşmalı firmalar', tek: 'firma', aciklama: 'Çiftlere indirim sunan çiçekçi, fotoğrafçı, gelinlikçi vb. firmalar. Sitede kart olarak görünür; kaç kişinin tıkladığını burada izlersiniz.',
       alanlar: [{ k: 'ad', e: 'Firma adı', t: 'text', zor: true }, { k: 'kategori', e: 'Kategori', t: 'text', ornek: 'Çiçekçi' }, { k: 'aciklama', e: 'Kısa açıklama', t: 'textarea' }, { k: 'indirim_oran', e: 'İndirim oranı (%)', t: 'number', max: 100 }, { k: 'instagram', e: 'Instagram', t: 'text', ornek: '@kullaniciadi' }, { k: 'web', e: 'Web sitesi', t: 'url' }, { k: 'telefon', e: 'Telefon', t: 'text' }, SIRA, AKTIF],
       satir: function (r) { return [r.ad, [r.kategori, r.indirim_oran ? '%' + r.indirim_oran + ' indirim' : '', r.yonlendirme_sayisi ? r.yonlendirme_sayisi + ' tıklama' : ''].filter(Boolean).join(' · ')]; } },
-    ciftler: { tablo: 'cift_yorumlari', baslik: 'Çiftlerimiz', tek: 'çift yorumu', aciklama: 'Sitedeki "Çiftlerimiz" sayfasında kategori kategori görünür. Çiftin fotoğrafını ve yorumunu buradan girin. Çiftler şifreyle giriş yapıp yorumlarını kendileri de yazabilir; o yorumlar "Onay bekliyor" olarak düşer, düzenleyip "Yayında" yapın.',
+    ciftler: { tablo: 'cift_yorumlari', baslik: 'Villora çiftleri', tek: 'çift yorumu', aciklama: 'Sitedeki "Villora çiftleri" sayfasında kategori kategori görünür. Çiftin fotoğrafını ve yorumunu buradan girin. Çiftler şifreyle giriş yapıp yorumlarını kendileri de yazabilir; o yorumlar "Onay bekliyor" olarak düşer, düzenleyip "Yayında" yapın.',
       alanlar: [{ k: 'ad', e: 'Çift, kişi ya da firma adı', t: 'text', zor: true, ornek: 'Ayşe & Ali' }, { k: 'kategori', e: 'Kategori', t: 'text', zor: true, v: 'Düğün', ornek: 'Düğün, Nikah, Nişan, Kına, Firma', yardim: 'Aynı yazılan kategoriler sitede bir arada gruplanır.' },
         { k: 'foto_url', e: 'Fotoğraf', t: 'gorsel' }, { k: 'yorum', e: 'Yorum', t: 'textarea', satir: 6 },
         { k: 'durum', e: 'Durum', t: 'select', v: 'yayinda', opt: [['yayinda', 'Yayında'], ['bekliyor', 'Onay bekliyor'], ['gizli', 'Gizli']] }, SIRA],
       satir: function (r) { return [r.ad, (r.kategori || '') + ' · ' + ({ yayinda: 'Yayında', bekliyor: 'Onay bekliyor', gizli: 'Gizli' }[r.durum] || '')]; } },
-    video: { tablo: 'mekan_videolari', baslik: 'Videolar', tek: 'video', aciklama: 'YouTube bağlantısı yapıştırın (önerilir, tam ekran oynar). "Shorts" dikey kısa videolar içindir, "Kliplerimiz" uzun klipler içindir. Instagram bağlantısı koyarsanız ziyaretçi Instagram\'a yönlendirilir.',
-      alanlar: [{ k: 'url', e: 'Video bağlantısı', t: 'url', zor: true, ornek: 'https://www.youtube.com/shorts/...' }, { k: 'baslik', e: 'Başlık', t: 'text' }, { k: 'bolum', e: 'Sitede nerede görünsün?', t: 'select', v: 'shorts', opt: [['shorts', 'Shorts (dikey kısa videolar)'], ['klip', 'Kliplerimiz']] }, SIRA, AKTIF],
+    video: { tablo: 'mekan_videolari', baslik: 'Villora\'dan anlar (videolar)', tek: 'video', aciklama: 'YouTube bağlantısı yapıştırın (önerilir, tam ekran oynar). "Villora\'dan anlar" sayfa sonunda dikey kısa videolar olarak görünür, "Kliplerimiz" uzun klipler içindir. Instagram bağlantısı koyarsanız ziyaretçi Instagram\'a yönlendirilir.',
+      alanlar: [{ k: 'url', e: 'Video bağlantısı', t: 'url', zor: true, ornek: 'https://www.youtube.com/shorts/...' }, { k: 'baslik', e: 'Başlık', t: 'text' }, { k: 'bolum', e: 'Sitede nerede görünsün?', t: 'select', v: 'shorts', opt: [['shorts', 'Villora\'dan anlar (dikey kısa videolar)'], ['klip', 'Kliplerimiz']] }, SIRA, AKTIF],
       filtre: function (r) { return r.bolum !== 'makyaj'; },
-      satir: function (r) { return [r.baslik || r.url, (r.bolum === 'klip' ? 'Kliplerimiz' : 'Shorts') + ' · ' + (/youtu/i.test(r.url) ? 'YouTube' : 'Instagram')]; } },
-    makyaj_video: { tablo: 'mekan_videolari', baslik: 'Make-up videoları', tek: 'video', aciklama: 'YouTube bağlantısı yapıştırın. Make-up penceresinde görünür.',
+      satir: function (r) { return [r.baslik || r.url, (r.bolum === 'klip' ? 'Kliplerimiz' : 'Villora\'dan anlar') + ' · ' + (/youtu/i.test(r.url) ? 'YouTube' : 'Instagram')]; } },
+    makyaj_video: { tablo: 'mekan_videolari', baslik: 'Saç ve makyaj videoları', tek: 'video', aciklama: 'YouTube bağlantısı yapıştırın. Saç ve makyaj penceresinde görünür.',
       alanlar: [{ k: 'url', e: 'Video bağlantısı', t: 'url', zor: true, ornek: 'https://www.youtube.com/shorts/...' }, { k: 'baslik', e: 'Başlık', t: 'text' }, SIRA, AKTIF],
       filtre: function (r) { return r.bolum === 'makyaj'; }, varsayilan: { bolum: 'makyaj' },
       satir: function (r) { return [r.baslik || r.url, /youtu/i.test(r.url) ? 'YouTube' : 'Instagram']; } },
-    makyaj_hiz: { tablo: 'makyaj_hizmetleri', baslik: 'Yapılan işlemler', tek: 'işlem', aciklama: 'Make-up penceresinde alt alta görünen işlemler. Her işlem için başlık ve açıklama yazın; fiyat isteğe bağlıdır.',
+    makyaj_hiz: { tablo: 'makyaj_hizmetleri', baslik: 'Yapılan işlemler', tek: 'işlem', aciklama: 'Saç ve makyaj penceresinde alt alta görünen işlemler. Her işlem için başlık ve açıklama yazın; fiyat isteğe bağlıdır.',
       alanlar: [{ k: 'baslik', e: 'İşlem adı', t: 'text', zor: true, ornek: 'Gelin makyajı' }, { k: 'aciklama', e: 'Açıklama (paragraf)', t: 'textarea', satir: 6 }, { k: 'fiyat', e: 'Fiyat (TL)', t: 'money', yardim: 'Boş bırakırsanız fiyat gösterilmez.' }, SIRA, AKTIF],
       satir: function (r) { return [r.baslik, r.fiyat == null ? '' : O.para(r.fiyat)]; } }
   };
@@ -850,8 +850,8 @@
   async function fotoCiz(kap, tur) {
     var hepsi = await q(sb.from('mekan_fotograflari').select('*').eq('mekan_id', M.id).order('sira').order('id'));
     var liste = hepsi.filter(function (f) { return f.tur === tur; }), hero = tur === 'galeri' ? hepsi.filter(function (f) { return f.tur === 'hero'; }) : [];
-    var baslik = tur === 'makyaj' ? 'Make-up fotoğrafları' : 'Fotoğraflar';
-    var aciklama = tur === 'makyaj' ? 'Make-up penceresinde görünen fotoğraflar.' : 'Sitedeki galeride görünen fotoğraflar.';
+    var baslik = tur === 'makyaj' ? 'Saç ve makyaj fotoğrafları' : 'Fotoğraflar';
+    var aciklama = tur === 'makyaj' ? 'Saç ve makyaj penceresinde görünen fotoğraflar.' : 'Sitedeki galeride görünen fotoğraflar.';
     function kart(f, i, sirali) {
       return '<figure class="foto" data-id="' + esc(f.id) + '">' + (sirali ? TUTAMAC + '<span class="foto-no">' + (i + 1) + '</span>' : '') + '<img loading="lazy" src="' + esc(O.guvenliUrl(f.url)) + '" alt="' + esc(f.baslik || 'Fotoğraf') + '"><figcaption>' + esc(f.baslik || '') + (f.aktif === false ? ' (gizli)' : '') + '</figcaption>' +
         '<div class="foto-ara"><button class="btn cizgi kucuk" data-d="duzenle" type="button">Düzenle</button><button class="btn tehlike kucuk" data-d="sil" type="button">Sil</button></div></figure>';
@@ -891,10 +891,10 @@
     });
   }
 
-  /* ---- Make-up sekmesi: yazı, işlemler, fotoğraflar, videolar ---- */
+  /* ---- Saç ve makyaj sekmesi: yazı, işlemler, fotoğraflar, videolar ---- */
   async function makyajCiz(kap) {
-    kap.innerHTML = '<form id="mkf" novalidate><h2>Make-up bölümü</h2><p class="not">Sitede "Make-up" kutusuna basınca açılan pencerenin yazısı. Fotoğraf, video ve işlemleri aşağıdan ekleyin; içerik girilince kutu sitede otomatik açılır.</p>' +
-      '<label class="alan"><span>Başlık <em>(isteğe bağlı)</em></span><input name="makyaj_baslik" value="' + esc(M.makyaj_baslik || '') + '" placeholder="Gelin make-up ve saç tasarımı"></label>' +
+    kap.innerHTML = '<form id="mkf" novalidate><h2>Saç ve makyaj bölümü</h2><p class="not">Sitede "Saç ve makyaj" kutusuna basınca açılan pencerenin yazısı. Fotoğraf, video ve işlemleri aşağıdan ekleyin; içerik girilince kutu sitede otomatik açılır.</p>' +
+      '<label class="alan"><span>Başlık <em>(isteğe bağlı)</em></span><input name="makyaj_baslik" value="' + esc(M.makyaj_baslik || '') + '" placeholder="Gelin saç ve makyaj ve saç tasarımı"></label>' +
       '<label class="alan"><span>Giriş yazısı</span><textarea name="makyaj_yazi" rows="5">' + esc(M.makyaj_yazi || '') + '</textarea><small class="yardim">Paragraf için araya boş satır bırakın.</small></label>' +
       '<div id="mkh"></div><button class="btn ana" type="submit">Yazıyı kaydet</button></form>' +
       '<div id="mkHiz" style="margin-top:28px"></div><div id="mkFoto" style="margin-top:28px"></div><div id="mkVid" style="margin-top:28px"></div>';
@@ -909,7 +909,7 @@
   }
 
   /* ================= SİTE AYARI ================= */
-  var BOLUMLER = [['tarih_sorgu', 'Tarih müsaitlik sorgusu'], ['galeri', 'Galeri'], ['hakkimizda', 'Hakkımızda bandı'], ['fiyatlar', 'Güncel fiyatlar'], ['teklif', 'Teklif al'], ['talep', 'Talep gir'], ['menu', 'Menü'], ['makeup', 'Make-up'], ['ozellikler', 'Mekan özellikleri'], ['firmalar', 'Anlaşmalı firmalar'], ['cift_ozel', 'Çiftlere özel giriş'], ['shorts', 'Shorts'], ['klipler', 'Kliplerimiz (klip videoları)'], ['foto_imaj', 'Foto İmaj (fotoğraf hazırlama uygulaması)'], ['movi_imaj', 'Movi İmaj (video kurgu uygulaması)'], ['imaj_ad', 'Foto ve video çıktılarına mekan adını silik yazı olarak ekle'], ['yakinda', 'Hazır olmayan kutuları "Yakında" diye göster']];
+  var BOLUMLER = [['tarih_sorgu', 'Villora\'da sizin gününüz hangisi? (tarih sorgusu)'], ['galeri', 'Villora\'yı Keşfedin: galeri'], ['ozellikler', 'Villora\'yı Keşfedin: mekan özellikleri'], ['dx_dugun', 'Villora Deneyimi: Düğün Günü Hazırlığı'], ['makeup', 'Villora Deneyimi: Saç ve makyaj'], ['dx_teklif', 'Villora Deneyimi: Evlilik Teklifi'], ['dx_ozel', 'Villora Deneyimi: Özel Kutlamalar'], ['dx_davet', 'Villora Deneyimi: Size Özel Davetler'], ['firmalar', 'Villora Deneyimi: Anlaşmalı firmalar'], ['foto_dergi', 'Foto Dergi'], ['menu', 'Paketler (menüler)'], ['teklif', 'Teklif al'], ['talep', 'Talep gir'], ['ciftlerimiz', 'Villora çiftleri'], ['hakkimizda', 'Hakkımızda bandı'], ['cift_ozel', 'Çiftlere özel giriş (foto ve video indir)'], ['shorts', 'Villora\'dan anlar (kısa videolar)'], ['klipler', 'Kliplerimiz (klip videoları)'], ['foto_imaj', 'Foto İmaj (fotoğraf hazırlama uygulaması)'], ['movi_imaj', 'Movi İmaj (video kurgu uygulaması)'], ['imaj_ad', 'Foto ve video çıktılarına mekan adını silik yazı olarak ekle'], ['yakinda', 'Hazır olmayan kutuları "Yakında" diye göster']];
   function ayarCiz() {
     var b = M.bolumler || {};
     function gorselAlan(ad, e, deger, yardim) {

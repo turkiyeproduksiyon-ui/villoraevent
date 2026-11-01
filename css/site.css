@@ -654,16 +654,16 @@ input[type="date"] { min-height: 48px; width: 100%; box-sizing: border-box; }
 .vt-ek-kart .ik { flex: none; }
 .vt-baslik p { margin-top: 6px; }
 
-/* v47: üst menü masaüstünde ekrana sığsın */
-@media (min-width: 960px) and (max-width: 1399px) {
-  .ust { padding: 0 20px; gap: 8px; }
-  .ust .marka { font-size: 21px; }
-  .ust .marka img { height: 38px; }
-  .ust-nav { gap: 0; }
-  .ust-nav button { padding: 0 7px; font-size: 13.5px; }
-  .ust-cta { padding-left: 14px; padding-right: 14px; }
-}
-@media (min-width: 960px) and (max-width: 1099px) {
-  .ust-nav { display: none; }
-  .menu-dugme { display: inline-flex; }
-}
+/* v47: üst menü = Teklif al + hamburger (her ekranda) */
+.ust-nav { display: none !important; }
+@media (min-width: 960px) { .menu-dugme { display: grid; } }
+.m-detay { gap: 14px; }
+.m-grup { display: grid; gap: 2px; }
+.m-grup h3 { margin: 6px 12px 4px; font: 600 14px/1.2 var(--sans, inherit); color: var(--ink-2); }
+.menu-liste .m-oge { align-items: center; min-height: 58px; padding: 8px 12px; gap: 14px; text-align: left; }
+.m-oge span { display: grid; gap: 2px; min-width: 0; }
+.m-oge b { font-size: 16.5px; font-weight: 600; }
+.m-oge small { font-size: 13.5px; font-weight: 400; color: var(--ink-2); line-height: 1.35; }
+.m-oge.vurgu { background: color-mix(in srgb, var(--accent) 9%, #fff); }
+.m-oge.vurgu b { color: var(--accent); }
+.m-oge .ik { flex: none; }
