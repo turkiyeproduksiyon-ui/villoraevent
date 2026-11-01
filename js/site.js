@@ -127,8 +127,8 @@
     h += '<header class="ust"><a class="marka" href="./">' + (logo ? '<img src="' + esc(logo) + '" alt="">' : '') + '<span>' + esc(M.ad) + '</span></a><!--NAV-->' +
       '<button class="menu-dugme" id="menuDugme" aria-label="Menüyü aç">' + ik('menu') + '</button></header>';
     if (ikinci) {
-      h += '<div class="sekme" role="tablist"><button role="tab" id="s0" aria-selected="true" data-s="0">Mekan</button>' +
-        '<button role="tab" id="s1" aria-selected="false" data-s="1">Mini Uygulamalar</button></div>';
+      h += '<div class="sekme" role="tablist"><button role="tab" id="s0" aria-selected="true" data-s="0">Villora\'yı Keşfedin</button>' +
+        '<button role="tab" id="s1" aria-selected="false" data-s="1">Çiftlerimize Özel</button></div>';
     }
     h += '<main>';
 
@@ -136,7 +136,7 @@
     h += '<section class="bolme aktif" id="b0" aria-labelledby="s0">';
     h += '<div class="acilis">' + (heroFoto && O.guvenliUrl(heroFoto) ? '<img src="' + esc(O.guvenliUrl(heroFoto)) + '" alt="' + esc(M.ad) + '" fetchpriority="high">' : '') +
       '<div class="acilis-ic"><h1>' + esc(M.ana_baslik || M.ad) + '</h1>' +
-      (M.ana_yazi ? '<p>' + esc(M.ana_yazi) + '</p>' : '') +
+      '<p>Villora\'da sizin gününüz hangisi? Villora\'yı keşfedin.</p>' +
       '<div class="satir"><button class="btn ana" data-islem="teklif">Teklif al</button>' +
       (D.menu.length && acik('menu') ? '<button class="btn cizgi" data-ankraj="menulerK">Paketleri keşfet</button>' : '') +
       (acik('foto_dergi') ? '<button class="btn cizgi" data-islem="dergi">Foto Dergi</button>' : '') +
@@ -324,10 +324,8 @@
       acik('ziyaret') ? { ad: 'Ziyaret Planla', alt: 'Gün ve saat seçin, sizi bekleyelim', i: 'takvim', x: 'ziyaret' } : null,
       acik('teklif') ? { ad: 'Teklif Al', alt: 'Tarihinizi ve isteklerinizi iletin', i: 'belge', x: 'teklif', v: true } : null
     ]);
-    mg('Çiftlerimiz', [
-      acik('ciftlerimiz') ? { ad: 'Villora Çiftleri', alt: 'Fotoğraflar ve yorumlar', i: 'yildiz', x: 'ciftler' } : null
-    ]);
-    mg('Mini Uygulamalar', [
+    mg('Çiftlerimize Özel', [
+      acik('ciftlerimiz') ? { ad: 'Villora Çiftleri', alt: 'Fotoğraflar ve yorumlar', i: 'yildiz', x: 'ciftler' } : null,
       acik('foto_dergi') ? { ad: 'Foto Dergi', alt: 'Anı dergisini PDF olarak hazırlayın', i: 'galeri', x: 'dergi' } : null,
       fotoImajAcik ? { ad: 'Foto İmaj', alt: 'Fotoğraflarınıza çerçeve ve yazı ekleyin', i: 'galeri', u: 'foto-imaj.html' + imajQm } : null,
       moviImajAcik ? { ad: 'Movi İmaj', alt: 'Videolarınızı kısaca kurgulayın', i: 'oynat', u: 'movi-imaj.html' + imajQm } : null,
