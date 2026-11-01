@@ -82,7 +82,7 @@
         '<button type="button" class="shorts-action-btn b-kaydet' + (kayit[v.id] ? ' saved' : '') + '" aria-label="Kaydet">' + IC.kaydet + '<span>Kaydet</span></button>' +
         '<button type="button" class="shorts-action-btn b-paylas" aria-label="Paylaş">' + IC.paylas + '<span>Paylaş</span></button>' +
         '</div>' +
-        '<div class="shorts-info"><span class="shorts-info-icon">' + IC.oynat + '</span><p>' + esc(v.baslik || ad + ' Shorts') + '</p></div></div>';
+        '<div class="shorts-info"><span class="shorts-info-icon">' + IC.oynat + '</span><p>' + esc(v.baslik || 'Villora’dan anılar') + '</p></div></div>';
     }).join('');
     feed.addEventListener('click', function (e) {
       var it = e.target.closest('.shorts-item'); if (!it) return;
@@ -91,7 +91,7 @@
       if (e.target.closest('.b-kaydet')) { kayit[v.id] = !kayit[v.id]; depoYaz('shorts_kayit', kayit); e.target.closest('.b-kaydet').classList.toggle('saved', !!kayit[v.id]); return; }
       if (e.target.closest('.b-paylas')) {
         var url = v.yt ? 'https://youtu.be/' + v.yt : v.url;
-        if (navigator.share) { navigator.share({ title: ad + ' Shorts', url: url }).catch(function () { /* iptal */ }); }
+        if (navigator.share) { navigator.share({ title: 'Villora’dan anılar', url: url }).catch(function () { /* iptal */ }); }
         else if (navigator.clipboard) { navigator.clipboard.writeText(url).then(function () { alert('Bağlantı kopyalandı'); }).catch(function () { /* yok */ }); }
         return;
       }
