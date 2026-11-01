@@ -66,10 +66,38 @@
   }
 
   function acik(k) { return !(M.bolumler && M.bolumler[k] === false); }
+  /* "Gelin make-up", "Gelin saç tasarımı" gibi ifadeler sitede tek başlıkta toplanır: Saç ve makyaj */
+  function makyajSatir(l) {
+    var t = String(l);
+    t = t.replace(/(gelin\s+)?(make-?\s?up|makyaj[a-zA-Zçğıöşüİ]*)\s*(ve|&|,)\s*saç(\s*(ve\s*)?(tasarım[a-zA-Zçğıöşüİ]*|modeli|yapımı))?/gi, 'Saç ve makyaj')
+      .replace(/(gelin\s+)?saç(\s*(ve|&|,)\s*(make-?\s?up|makyaj[a-zA-Zçğıöşüİ]*|tasarım[a-zA-Zçğıöşüİ]*))/gi, 'Saç ve makyaj')
+      .replace(/gelin\s+saç\s*tasarım[a-zA-Zçğıöşüİ]*/gi, 'Saç ve makyaj')
+      .replace(/gelin\s+(make-?\s?up|makyaj[a-zA-Zçğıöşüİ]*)/gi, 'Saç ve makyaj')
+      .replace(/saç\s*(ve|&)\s*tasarım[a-zA-Zçğıöşüİ]*/gi, 'Saç ve makyaj');
+    if (/^\s*make-?\s?up\s*$/i.test(t)) return 'Saç ve makyaj';
+    return t.replace(/make-?\s?up/gi, function (m, i) { return i === 0 ? 'Makyaj' : 'makyaj'; });
+  }
+  function makyajMetin(t) {
+    if (t == null || t === '') return t;
+    return String(t).split('\n').map(makyajSatir).join('\n');   // satır silinmez, yalnızca adı değişir
+  }
+  function veriTemizle() {
+    function a(o, alanlar) { alanlar.forEach(function (k) { if (o && typeof o[k] === 'string') o[k] = makyajMetin(o[k]); }); }
+    D.menu.forEach(function (m) { a(m, ['ad', 'aciklama', 'icerik', 'dahil_hizmetler', 'not_metni', 'fiyat_notu']); });
+    D.kat.forEach(function (c) { a(c, ['ad']); });
+    D.kalem.forEach(function (k) { a(k, ['ad', 'aciklama']); });
+    D.makyaj.forEach(function (x) { a(x, ['baslik', 'aciklama']); });
+    D.ozellik.forEach(function (x) { a(x, ['baslik', 'aciklama']); });
+    D.firma.forEach(function (x) { a(x, ['kategori', 'aciklama']); });
+    var gb = {}; D.makyaj = D.makyaj.filter(function (x) { var k = String(x.baslik || '').trim().toLowerCase(); if (k && gb[k]) return false; if (k) gb[k] = 1; return true; });
+    var gk = {}; D.kalem = D.kalem.filter(function (x) { var k = x.kategori_id + '|' + String(x.ad || '').trim().toLowerCase(); if (/saç ve makyaj/i.test(x.ad || '')) { if (gk[k]) return false; gk[k] = 1; } return true; });
+    a(M, ['makyaj_baslik', 'makyaj_yazi', 'ana_yazi', 'hakkinda']);
+  }
   function makyajBasligi() { return (M.makyaj_baslik && !/^make-?up$/i.test(String(M.makyaj_baslik).trim())) ? M.makyaj_baslik : 'Saç ve makyaj'; }
 
   /* ---------- Sayfa çizimi ---------- */
   function ciz() {
+    veriTemizle();
     O.renkUygula(M.ana_renk);
     document.title = M.ad + ' | Düğün ve organizasyon';
 
