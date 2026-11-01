@@ -66,15 +66,15 @@
   }
 
   function acik(k) { return !(M.bolumler && M.bolumler[k] === false); }
-  /* "Gelin make-up", "Gelin saç tasarımı" gibi ifadeler sitede tek başlıkta toplanır: Saç ve makyaj */
+  /* "Gelin make-up", "Gelin saç tasarımı" gibi ifadeler sitede tek başlıkta toplanır: Saç ve Makyaj */
   function makyajSatir(l) {
     var t = String(l);
-    t = t.replace(/(gelin\s+)?(make-?\s?up|makyaj[a-zA-Zçğıöşüİ]*)\s*(ve|&|,)\s*saç(\s*(ve\s*)?(tasarım[a-zA-Zçğıöşüİ]*|modeli|yapımı))?/gi, 'Saç ve makyaj')
-      .replace(/(gelin\s+)?saç(\s*(ve|&|,)\s*(make-?\s?up|makyaj[a-zA-Zçğıöşüİ]*|tasarım[a-zA-Zçğıöşüİ]*))/gi, 'Saç ve makyaj')
-      .replace(/gelin\s+saç\s*tasarım[a-zA-Zçğıöşüİ]*/gi, 'Saç ve makyaj')
-      .replace(/gelin\s+(make-?\s?up|makyaj[a-zA-Zçğıöşüİ]*)/gi, 'Saç ve makyaj')
-      .replace(/saç\s*(ve|&)\s*tasarım[a-zA-Zçğıöşüİ]*/gi, 'Saç ve makyaj');
-    if (/^\s*make-?\s?up\s*$/i.test(t)) return 'Saç ve makyaj';
+    t = t.replace(/(gelin\s+)?(make-?\s?up|makyaj[a-zA-Zçğıöşüİ]*)\s*(ve|&|,)\s*saç(\s*(ve\s*)?(tasarım[a-zA-Zçğıöşüİ]*|modeli|yapımı))?/gi, 'Saç ve Makyaj')
+      .replace(/(gelin\s+)?saç(\s*(ve|&|,)\s*(make-?\s?up|makyaj[a-zA-Zçğıöşüİ]*|tasarım[a-zA-Zçğıöşüİ]*))/gi, 'Saç ve Makyaj')
+      .replace(/gelin\s+saç\s*tasarım[a-zA-Zçğıöşüİ]*/gi, 'Saç ve Makyaj')
+      .replace(/gelin\s+(make-?\s?up|makyaj[a-zA-Zçğıöşüİ]*)/gi, 'Saç ve Makyaj')
+      .replace(/saç\s*(ve|&)\s*tasarım[a-zA-Zçğıöşüİ]*/gi, 'Saç ve Makyaj');
+    if (/^\s*make-?\s?up\s*$/i.test(t)) return 'Saç ve Makyaj';
     return t.replace(/make-?\s?up/gi, function (m, i) { return i === 0 ? 'Makyaj' : 'makyaj'; });
   }
   function makyajMetin(t) {
@@ -93,7 +93,7 @@
     var gk = {}; D.kalem = D.kalem.filter(function (x) { var k = x.kategori_id + '|' + String(x.ad || '').trim().toLowerCase(); if (/saç ve makyaj/i.test(x.ad || '')) { if (gk[k]) return false; gk[k] = 1; } return true; });
     a(M, ['makyaj_baslik', 'makyaj_yazi', 'ana_yazi', 'hakkinda']);
   }
-  function makyajBasligi() { return (M.makyaj_baslik && !/^make-?up$/i.test(String(M.makyaj_baslik).trim())) ? M.makyaj_baslik : 'Saç ve makyaj'; }
+  function makyajBasligi() { return (M.makyaj_baslik && !/^make-?up$/i.test(String(M.makyaj_baslik).trim())) ? M.makyaj_baslik : 'Saç ve Makyaj'; }
 
   /* ---------- Sayfa çizimi ---------- */
   function ciz() {
@@ -128,7 +128,7 @@
       '<button class="menu-dugme" id="menuDugme" aria-label="Menüyü aç">' + ik('menu') + '</button></header>';
     if (ikinci) {
       h += '<div class="sekme" role="tablist"><button role="tab" id="s0" aria-selected="true" data-s="0">Mekan</button>' +
-        '<button role="tab" id="s1" aria-selected="false" data-s="1">Mini uygulamalar</button></div>';
+        '<button role="tab" id="s1" aria-selected="false" data-s="1">Mini Uygulamalar</button></div>';
     }
     h += '<main>';
 
@@ -174,7 +174,7 @@
     /* İşlemler: 4 sütunlu kutular (taslaktaki sıra) */
     var T = [
       { k: 'teklif', ad: 'Teklif al', i: 'belge', vurgu: true, on: acik('teklif') },
-      { k: 'firmalar', ad: 'Anlaşmalı firmalar', i: 'el', alt: 'Gelin arabası, çiçekçi, fotoğrafçı, gelinlikçi, saç ve makyaj, bando, catering', on: acik('firmalar') },
+      { k: 'firmalar', ad: 'Anlaşmalı Firmalar', i: 'el', alt: 'Gelin arabası, çiçekçi, fotoğrafçı, gelinlikçi, saç ve makyaj, bando, catering', on: acik('firmalar') },
       { k: 'dj', ad: 'DJ müzik yükle', i: 'muzik', yak: true },
       { k: 'menu', ad: 'Menü', i: 'tabak', on: acik('menu') },
       { k: 'makyaj', ad: makyajBaslik, i: 'makyaj', on: makyajVar, yak: !makyajVar && acik('makeup') },
@@ -205,7 +205,7 @@
     var EK = DX.filter(function (d) { return d.k === 'dx_dugun'; });
     if (makyajVar && acik('makeup')) EK.push({ k: 'makyaj', ad: makyajBaslik, i: 'makyaj', y: 'Düğün öncesi hazırlığınızın her adımını aynı yerde rahatça planlayın.' });
     EK = EK.concat(DX.filter(function (d) { return d.k !== 'dx_dugun'; }));
-    if (acik('firmalar')) EK.push({ k: 'firmalar', ad: 'Anlaşmalı firmalar', i: 'el', y: 'Gelin arabası, çiçekçi, fotoğrafçı, gelinlikçi, bando ve catering. Çiftlerimize özel indirimler.' });
+    if (acik('firmalar')) EK.push({ k: 'firmalar', ad: 'Anlaşmalı Firmalar', i: 'el', y: 'Gelin arabası, çiçekçi, fotoğrafçı, gelinlikçi, bando ve catering. Çiftlerimize özel indirimler.' });
     if (acik('ciftlerimiz')) EK.push({ k: 'ciftler', ad: 'Çiftlerimiz', i: 'yildiz', y: 'Villora çiftlerinin fotoğrafları ve yorumları.' });
     if (acik('foto_dergi')) EK.push({ k: 'dergi', ad: 'Foto Dergi', i: 'galeri', y: 'Fotoğraflarınızı seçin, anı dergisini PDF olarak indirin. Yüklenmez, cihazınızda hazırlanır.' });
     if (EK.length) {
@@ -215,7 +215,7 @@
     }
 
     if (D.menu.length && acik('menu')) {
-      h += '<section class="vt vt-menuler" id="menulerK"><div class="vt-kap"><div class="vt-baslik"><h2>Paketleri keşfet</h2><p>Size uygun menüyü seçin. Her menünün içeriği ve dahil hizmetleri kartın içinde.</p></div><div class="vt-seri">';
+      h += '<section class="vt vt-menuler" id="menulerK"><div class="vt-kap"><div class="vt-baslik"><h2>Paketleri Keşfet</h2><p>Size uygun menüyü seçin. Her menünün içeriği ve dahil hizmetleri kartın içinde.</p></div><div class="vt-seri">';
       D.menu.forEach(function (m, i) {
         var bl = O.menuAyir ? O.menuAyir(m.icerik) : [], hz = O.satirlar ? O.satirlar(m.dahil_hizmetler) : [];
         var etiket = bl.map(function (x) { return bolumAdi(x.baslik); }).filter(Boolean);
@@ -246,7 +246,7 @@
         '<div class="vt-cift-dugme"><button type="button" class="btn ana" data-islem="ciftler">' + (cfL.length ? 'Tüm çiftlerimiz' : 'Çiftlerimizi görün') + '</button></div></div></section>';
     }
 
-    h += '<section class="vt vt-iletisim" id="iletisimK"><div class="vt-kap vt-il-izgara"><div><h2>Bize ulaşın</h2>' + (M.adres ? '<p class="vt-adres">' + esc(M.adres) + '</p>' : '') +
+    h += '<section class="vt vt-iletisim" id="iletisimK"><div class="vt-kap vt-il-izgara"><div><h2>Bize Ulaşın</h2>' + (M.adres ? '<p class="vt-adres">' + esc(M.adres) + '</p>' : '') +
       '<div class="vt-il-dugme">' + (wa ? '<a class="btn ana" href="' + esc(wa) + '" target="_blank" rel="noopener">' + ik('whatsapp', 20) + 'WhatsApp</a>' : '') +
       (tel ? '<a class="btn cizgi" href="tel:' + esc(tel) + '">' + ik('telefon', 20) + esc(M.telefon) + '</a>' : '') +
       (harita ? '<a class="btn cizgi" href="' + esc(harita) + '" target="_blank" rel="noopener">' + ik('konum', 20) + 'Yol tarifi</a>' : '') +
@@ -269,10 +269,10 @@
       if (moviImajAcik) mini += '<a class="islem mini baglanti" href="movi-imaj.html' + imajQ + '"><b>Movi İmaj</b></a>';
       if (fotoImajAcik) mini += '<a class="islem mini baglanti" href="foto-imaj.html' + imajQ + '"><b>Foto İmaj</b></a>';
       if (acik('foto_dergi')) mini += '<button type="button" class="islem mini" data-islem="dergi"><b>Foto Dergi</b></button>';
-      if (ozelAcik) mini += '<button type="button" class="islem mini" data-ankraj="ozelK"><b>Foto ve video indir</b></button>';
-      if (mini) h += '<div class="kisim k-mini"><h2>Mini uygulamalarımız</h2><div class="kutular dort kucuk-sira">' + mini + '</div></div>';
+      if (ozelAcik) mini += '<button type="button" class="islem mini" data-ankraj="ozelK"><b>Foto ve Video İndir</b></button>';
+      if (mini) h += '<div class="kisim k-mini"><h2>Mini Uygulamalarımız</h2><div class="kutular dort kucuk-sira">' + mini + '</div></div>';
       if (ozelAcik) {
-        h += '<div class="kisim k-ozel" id="ozelK"><div class="ozel" id="ozelKutu"><h2>Foto ve video indir</h2><p class="not">' + esc(M.ad) + ' ile anlaşan çiftler, size verilen şifreyle buradan fotoğraf ve videolarına ulaşır.</p>' +
+        h += '<div class="kisim k-ozel" id="ozelK"><div class="ozel" id="ozelKutu"><h2>Foto ve Video İndir</h2><p class="not">' + esc(M.ad) + ' ile anlaşan çiftler, size verilen şifreyle buradan fotoğraf ve videolarına ulaşır.</p>' +
           '<form id="ozelForm" novalidate><label class="alan"><span>Şifreniz</span><input id="ozelKod" class="kod" autocomplete="off" autocapitalize="characters" maxlength="12" placeholder="ABCD-1234"></label>' +
           '<div id="ozelHata"></div><button class="btn ana tam" type="submit">' + ik('kilit', 20) + 'Giriş yap</button></form></div></div>';
       }
@@ -318,22 +318,22 @@
       acik('dx_davet') ? { ad: 'Size Özel Davetler', alt: 'Hayatınızın dönüm noktaları', i: 'belge', x: 'dx_davet' } : null,
       makyajVar && acik('makeup') ? { ad: makyajBaslik, alt: 'Düğün öncesi hazırlığın her adımı', i: 'makyaj', x: 'makyaj' } : null
     ]);
-    mg('Paketler ve teklif', [
-      D.menu.length && acik('menu') ? { ad: 'Paketleri keşfet', alt: 'Menüleri inceleyin, kişi başı fiyatları görün', i: 'tabak', a: 'menulerK' } : null,
-      acik('firmalar') ? { ad: 'Anlaşmalı firmalar', alt: 'Gelin arabası, çiçekçi, fotoğrafçı, bando, catering', i: 'el', x: 'firmalar' } : null,
-      acik('ziyaret') ? { ad: 'Ziyaret planla', alt: 'Gün ve saat seçin, sizi bekleyelim', i: 'takvim', x: 'ziyaret' } : null,
-      acik('teklif') ? { ad: 'Teklif al', alt: 'Tarihinizi ve isteklerinizi iletin', i: 'belge', x: 'teklif', v: true } : null
+    mg('Paketler ve Teklif', [
+      D.menu.length && acik('menu') ? { ad: 'Paketleri Keşfet', alt: 'Menüleri inceleyin, kişi başı fiyatları görün', i: 'tabak', a: 'menulerK' } : null,
+      acik('firmalar') ? { ad: 'Anlaşmalı Firmalar', alt: 'Gelin arabası, çiçekçi, fotoğrafçı, bando, catering', i: 'el', x: 'firmalar' } : null,
+      acik('ziyaret') ? { ad: 'Ziyaret Planla', alt: 'Gün ve saat seçin, sizi bekleyelim', i: 'takvim', x: 'ziyaret' } : null,
+      acik('teklif') ? { ad: 'Teklif Al', alt: 'Tarihinizi ve isteklerinizi iletin', i: 'belge', x: 'teklif', v: true } : null
     ]);
     mg('Çiftlerimiz', [
-      acik('ciftlerimiz') ? { ad: 'Villora çiftleri', alt: 'Fotoğraflar ve yorumlar', i: 'yildiz', x: 'ciftler' } : null
+      acik('ciftlerimiz') ? { ad: 'Villora Çiftleri', alt: 'Fotoğraflar ve yorumlar', i: 'yildiz', x: 'ciftler' } : null
     ]);
-    mg('Mini uygulamalar', [
+    mg('Mini Uygulamalar', [
       acik('foto_dergi') ? { ad: 'Foto Dergi', alt: 'Anı dergisini PDF olarak hazırlayın', i: 'galeri', x: 'dergi' } : null,
       fotoImajAcik ? { ad: 'Foto İmaj', alt: 'Fotoğraflarınıza çerçeve ve yazı ekleyin', i: 'galeri', u: 'foto-imaj.html' + imajQm } : null,
       moviImajAcik ? { ad: 'Movi İmaj', alt: 'Videolarınızı kısaca kurgulayın', i: 'oynat', u: 'movi-imaj.html' + imajQm } : null,
-      ozelAcik ? { ad: 'Foto ve video indir', alt: 'Çiftlere özel, şifreyle giriş', i: 'indir', a: 'ozelK' } : null
+      ozelAcik ? { ad: 'Foto ve Video İndir', alt: 'Çiftlere özel, şifreyle giriş', i: 'indir', a: 'ozelK' } : null
     ]);
-    mg('Hakkımızda ve iletişim', [
+    mg('Hakkımızda ve İletişim', [
       acik('hakkimizda') && M.hakkinda ? { ad: 'Hakkımızda', alt: 'Villora Event kimdir', i: 'yildiz', a: 'hakkimizdaK' } : null,
       { ad: 'İletişim', alt: 'WhatsApp, telefon, adres ve harita', i: 'telefon', a: 'iletisimK' }
     ]);
@@ -601,7 +601,7 @@
     return '<div class="kalem"><div><div class="ad">' + esc(k.ad) + '</div>' + (k.aciklama ? '<div class="ac">' + esc(k.aciklama) + '</div>' : '') + '</div>' + fiyatMetni(k) + '</div>';
   }
   function gruplar() {
-    var g = D.kat.map(function (c) { return { ad: /^make-?up$/i.test(String(c.ad).trim()) ? 'Saç ve makyaj' : c.ad, kalemler: D.kalem.filter(function (k) { return k.kategori_id === c.id; }) }; });
+    var g = D.kat.map(function (c) { return { ad: /^make-?up$/i.test(String(c.ad).trim()) ? 'Saç ve Makyaj' : c.ad, kalemler: D.kalem.filter(function (k) { return k.kategori_id === c.id; }) }; });
     var diger = D.kalem.filter(function (k) { return !k.kategori_id || !D.kat.some(function (c) { return c.id === k.kategori_id; }); });
     if (diger.length) g.push({ ad: g.length ? 'Diğer hizmetler' : 'Hizmetler', kalemler: diger });
     return g.filter(function (x) { return x.kalemler.length; });
@@ -646,7 +646,7 @@
     }
     if (MAKYAJ.video.length) h += '<h3 class="mk-alt">Videolar</h3><div class="video-izgara">' + MAKYAJ.video.map(function (v, i) { return videoKart('data-mvideo', i, v); }).join('') + '</div>';
     var wa = O.waLink(M.whatsapp || M.telefon, 'Merhaba, saç ve makyaj hizmeti hakkında bilgi almak istiyorum.');
-    if (wa) h += '<p style="margin:16px 0 0"><a class="btn ana tam" target="_blank" rel="noopener" href="' + esc(wa) + '">' + ik('whatsapp', 20) + 'Saç ve makyaj için WhatsApp\'tan yaz</a></p>';
+    if (wa) h += '<p style="margin:16px 0 0"><a class="btn ana tam" target="_blank" rel="noopener" href="' + esc(wa) + '">' + ik('whatsapp', 20) + 'Saç ve Makyaj için WhatsApp\'tan yaz</a></p>';
     pencere(makyajBasligi(), h || '<p class="not">Yakında burada.</p>');
   }
 
@@ -744,7 +744,7 @@
         (tel ? '<a class="btn hafif kucuk" data-f="' + esc(f.id) + '" href="tel:' + esc(tel) + '">' + ik('telefon', 18) + 'Ara</a>' : '') +
         '</div></div>';
     });
-    var ic = pencere('Anlaşmalı firmalar', h);
+    var ic = pencere('Anlaşmalı Firmalar', h);
     ic.addEventListener('click', function (e) {
       var a = e.target.closest('[data-f]');
       if (a) { try { sb.rpc('firma_yonlendir', { p_firma: a.getAttribute('data-f') }).then(function () { }, function () { }); } catch (x) { /* sayaç hatası önemsiz */ } }
@@ -957,7 +957,7 @@
     $('#ozelKutu').innerHTML = '<div class="hosgeldin"><h3>Hoş geldiniz, ' + esc(x.ad) + ' ' + esc(x.soyad) + '</h3>' +
       (x.dugun_tarihi ? '<p class="not" style="margin:0 0 8px">Düğün tarihiniz: <b>' + esc(O.tarihTR(x.dugun_tarihi)) + '</b></p>' : '') +
       (x.mesaj ? '<p style="margin:0 0 14px;white-space:pre-line">' + esc(x.mesaj) + '</p>' : '') +
-      (link ? '<a class="btn ana tam" target="_blank" rel="noopener" href="' + esc(link) + '">' + ik('indir', 20) + 'Foto ve video indir</a>' +
+      (link ? '<a class="btn ana tam" target="_blank" rel="noopener" href="' + esc(link) + '">' + ik('indir', 20) + 'Foto ve Video İndir</a>' +
         '<p class="not" style="margin:10px 0 0">Bağlantı açılmazsa mekanla iletişime geçin.</p>' : '<p class="not" style="margin:0">Fotoğraf ve videolarınız hazır olduğunda burada görünecek.</p>') +
       (x.bitis ? '<p class="not" style="margin:12px 0 0">Bu alan ' + esc(O.tarihTR(x.bitis)) + ' tarihine kadar açık.</p>' : '') +
       '<div class="yorum-kutu"><h4>' + esc(M.ad) + ' hakkında yorumunuz</h4><label class="alan"><span>Adınız <em>(sitede görünür)</em></span><input id="yrAd" maxlength="80" value="' + esc((x.ad + ' ' + x.soyad).trim()) + '"></label>' +

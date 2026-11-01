@@ -674,7 +674,7 @@
 
   /* ================= İÇERİK ================= */
   var icerikAlt = 'foto';
-  var ALTLAR = [['foto', 'Fotoğraflar'], ['ozellik', 'Mekan özellikleri'], ['menu', 'Paketler'], ['makyaj', 'Saç ve makyaj'], ['firma', 'Anlaşmalı firmalar'], ['ciftler', 'Villora çiftleri'], ['video', 'Villora\'dan anlar'], ['salon', 'Salonlar'], ['fiyat', 'Teklif kalemleri'], ['sozlesme', 'Sözleşme']];
+  var ALTLAR = [['foto', 'Fotoğraflar'], ['ozellik', 'Mekan özellikleri'], ['menu', 'Paketler'], ['makyaj', 'Saç ve Makyaj'], ['firma', 'Anlaşmalı firmalar'], ['ciftler', 'Villora çiftleri'], ['video', 'Villora\'dan anlar'], ['salon', 'Salonlar'], ['fiyat', 'Teklif kalemleri'], ['sozlesme', 'Sözleşme']];
   function icerikCiz() {
     aktifSayfa().innerHTML = '<div class="alt-sekme" role="tablist">' + ALTLAR.map(function (a) { return '<button role="tab" data-a="' + a[0] + '" aria-selected="' + (a[0] === icerikAlt) + '">' + a[1] + '</button>'; }).join('') + '</div><div id="altIc"></div>';
     $('.alt-sekme').addEventListener('click', function (e) {
@@ -746,11 +746,11 @@
       alanlar: [{ k: 'url', e: 'Video bağlantısı', t: 'url', zor: true, ornek: 'https://www.youtube.com/shorts/...' }, { k: 'baslik', e: 'Başlık', t: 'text' }, { k: 'bolum', e: 'Sitede nerede görünsün?', t: 'select', v: 'shorts', opt: [['shorts', 'Villora\'dan anlar (dikey kısa videolar)'], ['klip', 'Kliplerimiz']] }, SIRA, AKTIF],
       filtre: function (r) { return r.bolum !== 'makyaj'; },
       satir: function (r) { return [r.baslik || r.url, (r.bolum === 'klip' ? 'Kliplerimiz' : 'Villora\'dan anlar') + ' · ' + (/youtu/i.test(r.url) ? 'YouTube' : 'Instagram')]; } },
-    makyaj_video: { tablo: 'mekan_videolari', baslik: 'Saç ve makyaj videoları', tek: 'video', aciklama: 'YouTube bağlantısı yapıştırın. Saç ve makyaj penceresinde görünür.',
+    makyaj_video: { tablo: 'mekan_videolari', baslik: 'Saç ve Makyaj videoları', tek: 'video', aciklama: 'YouTube bağlantısı yapıştırın. Saç ve Makyaj penceresinde görünür.',
       alanlar: [{ k: 'url', e: 'Video bağlantısı', t: 'url', zor: true, ornek: 'https://www.youtube.com/shorts/...' }, { k: 'baslik', e: 'Başlık', t: 'text' }, SIRA, AKTIF],
       filtre: function (r) { return r.bolum === 'makyaj'; }, varsayilan: { bolum: 'makyaj' },
       satir: function (r) { return [r.baslik || r.url, /youtu/i.test(r.url) ? 'YouTube' : 'Instagram']; } },
-    makyaj_hiz: { tablo: 'makyaj_hizmetleri', baslik: 'Yapılan işlemler', tek: 'işlem', aciklama: 'Saç ve makyaj penceresinde alt alta görünen işlemler. Her işlem için başlık ve açıklama yazın; fiyat isteğe bağlıdır.',
+    makyaj_hiz: { tablo: 'makyaj_hizmetleri', baslik: 'Yapılan işlemler', tek: 'işlem', aciklama: 'Saç ve Makyaj penceresinde alt alta görünen işlemler. Her işlem için başlık ve açıklama yazın; fiyat isteğe bağlıdır.',
       alanlar: [{ k: 'baslik', e: 'İşlem adı', t: 'text', zor: true, ornek: 'Gelin makyajı' }, { k: 'aciklama', e: 'Açıklama (paragraf)', t: 'textarea', satir: 6 }, { k: 'fiyat', e: 'Fiyat (TL)', t: 'money', yardim: 'Boş bırakırsanız fiyat gösterilmez.' }, SIRA, AKTIF],
       satir: function (r) { return [r.baslik, r.fiyat == null ? '' : O.para(r.fiyat)]; } }
   };
@@ -855,8 +855,8 @@
   async function fotoCiz(kap, tur) {
     var hepsi = await q(sb.from('mekan_fotograflari').select('*').eq('mekan_id', M.id).order('sira').order('id'));
     var liste = hepsi.filter(function (f) { return f.tur === tur; }), hero = tur === 'galeri' ? hepsi.filter(function (f) { return f.tur === 'hero'; }) : [];
-    var baslik = tur === 'makyaj' ? 'Saç ve makyaj fotoğrafları' : 'Fotoğraflar';
-    var aciklama = tur === 'makyaj' ? 'Saç ve makyaj penceresinde görünen fotoğraflar.' : 'Sitedeki galeride görünen fotoğraflar.';
+    var baslik = tur === 'makyaj' ? 'Saç ve Makyaj fotoğrafları' : 'Fotoğraflar';
+    var aciklama = tur === 'makyaj' ? 'Saç ve Makyaj penceresinde görünen fotoğraflar.' : 'Sitedeki galeride görünen fotoğraflar.';
     function kart(f, i, sirali) {
       return '<figure class="foto" data-id="' + esc(f.id) + '">' + (sirali ? TUTAMAC + '<span class="foto-no">' + (i + 1) + '</span>' : '') + '<img loading="lazy" src="' + esc(O.guvenliUrl(f.url)) + '" alt="' + esc(f.baslik || 'Fotoğraf') + '"><figcaption>' + esc(f.baslik || '') + (f.aktif === false ? ' (gizli)' : '') + '</figcaption>' +
         '<div class="foto-ara"><button class="btn cizgi kucuk" data-d="duzenle" type="button">Düzenle</button><button class="btn tehlike kucuk" data-d="sil" type="button">Sil</button></div></figure>';
@@ -896,9 +896,9 @@
     });
   }
 
-  /* ---- Saç ve makyaj sekmesi: yazı, işlemler, fotoğraflar, videolar ---- */
+  /* ---- Saç ve Makyaj sekmesi: yazı, işlemler, fotoğraflar, videolar ---- */
   async function makyajCiz(kap) {
-    kap.innerHTML = '<form id="mkf" novalidate><h2>Saç ve makyaj bölümü</h2><p class="not">Sitede "Saç ve makyaj" kutusuna basınca açılan pencerenin yazısı. Fotoğraf, video ve işlemleri aşağıdan ekleyin; içerik girilince kutu sitede otomatik açılır.</p>' +
+    kap.innerHTML = '<form id="mkf" novalidate><h2>Saç ve Makyaj bölümü</h2><p class="not">Sitede "Saç ve Makyaj" kutusuna basınca açılan pencerenin yazısı. Fotoğraf, video ve işlemleri aşağıdan ekleyin; içerik girilince kutu sitede otomatik açılır.</p>' +
       '<label class="alan"><span>Başlık <em>(isteğe bağlı)</em></span><input name="makyaj_baslik" value="' + esc(M.makyaj_baslik || '') + '" placeholder="Gelin saç ve makyaj ve saç tasarımı"></label>' +
       '<label class="alan"><span>Giriş yazısı</span><textarea name="makyaj_yazi" rows="5">' + esc(M.makyaj_yazi || '') + '</textarea><small class="yardim">Paragraf için araya boş satır bırakın.</small></label>' +
       '<div id="mkh"></div><button class="btn ana" type="submit">Yazıyı kaydet</button></form>' +
@@ -914,7 +914,7 @@
   }
 
   /* ================= SİTE AYARI ================= */
-  var BOLUMLER = [['tarih_sorgu', 'Villora\'da sizin gününüz hangisi? (tarih sorgusu)'], ['ziyaret', 'Ziyaret planla (takvimli form)'], ['galeri', 'Villora\'yı Keşfedin: galeri'], ['ozellikler', 'Villora\'yı Keşfedin: mekan özellikleri'], ['dx_dugun', 'Villora Deneyimi: Düğün Günü Hazırlığı'], ['makeup', 'Villora Deneyimi: Saç ve makyaj'], ['dx_teklif', 'Villora Deneyimi: Evlilik Teklifi'], ['dx_ozel', 'Villora Deneyimi: Özel Kutlamalar'], ['dx_davet', 'Villora Deneyimi: Size Özel Davetler'], ['firmalar', 'Villora Deneyimi: Anlaşmalı firmalar'], ['foto_dergi', 'Foto Dergi'], ['menu', 'Paketler (menüler)'], ['teklif', 'Teklif al'], ['talep', 'Talep gir'], ['ciftlerimiz', 'Villora çiftleri'], ['hakkimizda', 'Hakkımızda bandı'], ['cift_ozel', 'Çiftlere özel giriş (foto ve video indir)'], ['shorts', 'Villora\'dan anlar (kısa videolar)'], ['klipler', 'Kliplerimiz (klip videoları)'], ['foto_imaj', 'Foto İmaj (fotoğraf hazırlama uygulaması)'], ['movi_imaj', 'Movi İmaj (video kurgu uygulaması)'], ['imaj_ad', 'Foto ve video çıktılarına mekan adını silik yazı olarak ekle'], ['yakinda', 'Hazır olmayan kutuları "Yakında" diye göster']];
+  var BOLUMLER = [['tarih_sorgu', 'Villora\'da sizin gününüz hangisi? (tarih sorgusu)'], ['ziyaret', 'Ziyaret planla (takvimli form)'], ['galeri', 'Villora\'yı Keşfedin: galeri'], ['ozellikler', 'Villora\'yı Keşfedin: mekan özellikleri'], ['dx_dugun', 'Villora Deneyimi: Düğün Günü Hazırlığı'], ['makeup', 'Villora Deneyimi: Saç ve Makyaj'], ['dx_teklif', 'Villora Deneyimi: Evlilik Teklifi'], ['dx_ozel', 'Villora Deneyimi: Özel Kutlamalar'], ['dx_davet', 'Villora Deneyimi: Size Özel Davetler'], ['firmalar', 'Villora Deneyimi: Anlaşmalı firmalar'], ['foto_dergi', 'Foto Dergi'], ['menu', 'Paketler (menüler)'], ['teklif', 'Teklif al'], ['talep', 'Talep gir'], ['ciftlerimiz', 'Villora çiftleri'], ['hakkimizda', 'Hakkımızda bandı'], ['cift_ozel', 'Çiftlere özel giriş (foto ve video indir)'], ['shorts', 'Villora\'dan anlar (kısa videolar)'], ['klipler', 'Kliplerimiz (klip videoları)'], ['foto_imaj', 'Foto İmaj (fotoğraf hazırlama uygulaması)'], ['movi_imaj', 'Movi İmaj (video kurgu uygulaması)'], ['imaj_ad', 'Foto ve video çıktılarına mekan adını silik yazı olarak ekle'], ['yakinda', 'Hazır olmayan kutuları "Yakında" diye göster']];
   function ayarCiz() {
     var b = M.bolumler || {};
     function gorselAlan(ad, e, deger, yardim) {
