@@ -270,7 +270,7 @@
       if (fotoImajAcik) mini += '<a class="islem mini baglanti" href="foto-imaj.html' + imajQ + '"><b>Foto İmaj</b></a>';
       if (acik('foto_dergi')) mini += '<button type="button" class="islem mini" data-islem="dergi"><b>Foto Dergi</b></button>';
       if (ozelAcik) mini += '<button type="button" class="islem mini" data-ankraj="ozelK"><b>Foto ve Video İndir</b></button>';
-      if (mini) h += '<div class="kisim k-mini"><h2>Mini Uygulamalarımız</h2><div class="kutular dort kucuk-sira">' + mini + '</div></div>';
+      if (mini) h += '<div class="kisim k-mini"><h2>Çiftlerimize Özel Mini Uygulamalarımız</h2><div class="kutular dort kucuk-sira">' + mini + '</div></div>';
       if (ozelAcik) {
         h += '<div class="kisim k-ozel" id="ozelK"><div class="ozel" id="ozelKutu"><h2>Foto ve Video İndir</h2><p class="not">' + esc(M.ad) + ' ile anlaşan çiftler, size verilen şifreyle buradan fotoğraf ve videolarına ulaşır.</p>' +
           '<form id="ozelForm" novalidate><label class="alan"><span>Şifreniz</span><input id="ozelKod" class="kod" autocomplete="off" autocapitalize="characters" maxlength="12" placeholder="ABCD-1234"></label>' +
