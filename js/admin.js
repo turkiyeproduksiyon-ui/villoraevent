@@ -244,12 +244,12 @@
       if (a && (k.ad + ' ' + k.soyad + ' ' + k.telefon + ' ' + (k.eposta || '')).toLocaleLowerCase('tr').indexOf(a) < 0) return;
       n++;
       h += '<button class="kayit tablo-satir' + (k.durum === 'yeni' ? ' yeni' : '') + '" data-id="' + esc(k.id) + '"><span class="t-ad"><b>' + esc(k.cift_adi || (k.ad + ' ' + k.soyad)) + '</b><small>' + esc(k.telefon || '') + '</small></span>' +
-        '<span class="t-tarih">' + esc(k.dugun_tarihi ? O.tarihTR(k.dugun_tarihi) : 'Tarih yok') + '</span><span class="t-salon">' + esc(salonAd(k.salon_id) || '') + '</span><span class="t-kisi">' + esc(k.kisi_sayisi || '') + '</span>' +
+        '<span class="t-tarih">' + esc(zTarih(k)) + '</span><span class="t-salon">' + esc(salonAd(k.salon_id) || '') + '</span><span class="t-kisi">' + esc(k.kisi_sayisi || '') + '</span>' +
         '<span class="t-durum">' + rozet(k.durum) + '</span><span class="t-tutar">' + (Number(k.tutar) > 0 ? esc(O.para(k.tutar)) : '') + '</span><span class="t-kalan' + (Number(k.kalan) > 0 ? ' var' : '') + '">' + (Number(k.tutar) > 0 ? esc(O.para(k.kalan)) : '') + '</span></button>';
       return;
       h += '<button class="kayit' + (k.durum === 'yeni' ? ' yeni' : '') + '" data-id="' + esc(k.id) + '"><div class="k-ust"><b>' + esc(k.ad + ' ' + k.soyad) + '</b>' + rozet(k.durum) + '</div>' +
-        '<div class="k-alt"><span>' + esc(k.dugun_tarihi ? O.tarihTR(k.dugun_tarihi) : 'Tarih yok') + '</span>' + (k.salon_id ? '<span>' + esc(salonAd(k.salon_id)) + '</span>' : '') +
-        (k.kisi_sayisi ? '<span>' + esc(k.kisi_sayisi) + ' kişi</span>' : '') + '<span class="soluk">' + esc(k.kaynak === 'teklif' ? 'Teklif talebi' : k.kaynak === 'talep' ? 'Talep' : 'Elle girildi') + '</span></div>' +
+        '<div class="k-alt"><span>' + esc(zTarih(k)) + '</span>' + (k.salon_id ? '<span>' + esc(salonAd(k.salon_id)) + '</span>' : '') +
+        (k.kisi_sayisi ? '<span>' + esc(k.kisi_sayisi) + ' kişi</span>' : '') + '<span class="soluk">' + esc(kaynakAd(k)) + '</span></div>' +
         (Number(k.tutar) > 0 ? '<div class="k-alt"><span>Tutar <b>' + esc(O.para(k.tutar)) + '</b></span><span>Ödenen <b>' + esc(O.para(k.odenen)) + '</b></span><span>Kalan <b>' + esc(O.para(k.kalan)) + '</b></span></div>' : '') + '</button>';
     });
     $('#liste').innerHTML = n ? '<div class="tablo-bas"><span>Çift</span><span>Düğün tarihi</span><span>Salon</span><span>Kişi</span><span>Durum</span><span>Tutar</span><span>Kalan</span></div>' + h : '<div class="bos">' + (K.length ? 'Bu filtreyle kayıt yok.' : 'Henüz kayıt yok. Sitenizden gelen teklif ve talepler burada görünecek. "Yeni kayıt" ile elle de ekleyebilirsiniz.') + '</div>';
@@ -340,8 +340,9 @@
       var c = S.k, kalan = DURUM_AD[c.durum] ? c.durum : 'yeni';
       var menuSec = '<option value="">Seçilmedi</option>' + D.menu.map(function (m) { return '<option value="' + esc(m.id) + '"' + (m.id === c.menu_id ? ' selected' : '') + '>' + esc(m.ad) + '</option>'; }).join('');
       $('#d-bilgi', ic).innerHTML = bolum('Çift, düğün ve sözleşme bilgileri',
-        '<div class="ozet-satir">' + rozet(c.durum) + '<span class="soluk">' + esc(c.kaynak === 'teklif' ? 'Siteden teklif talebi' : c.kaynak === 'talep' ? 'Siteden talep' : 'Elle girildi') + ' · ' + esc((c.olusturma || '').slice(0, 10)) + '</span></div>' +
+        '<div class="ozet-satir">' + rozet(c.durum) + '<span class="soluk">' + esc(kaynakAd(c, true)) + ' · ' + esc((c.olusturma || '').slice(0, 10)) + '</span></div>' +
         (c.musteri_notu ? '<div class="alinti"><b>Çiftin notu</b><br>' + esc(c.musteri_notu) + '</div>' : '') +
+        (c.kaynak === 'ziyaret' && O.waLink(c.telefon, 'x') ? '<p style="margin:0 0 12px"><a class="btn hafif kucuk" target="_blank" rel="noopener" href="' + esc(O.waLink(c.telefon, 'Merhaba ' + c.ad + ', ' + O.tarihTR(c.dugun_tarihi) + (ziyaretSaat(c) ? ' saat ' + ziyaretSaat(c) : '') + ' ziyaretinizi onaylıyoruz, sizi bekliyoruz. ' + M.ad)) + '">' + ik('whatsapp', 18) + 'Ziyareti WhatsApp ile onayla</a></p>' : '') +
         '<form id="bf" novalidate>' +
         '<h3 class="form-baslik">Organizasyon sahibi</h3>' +
         '<div class="ikili">' + giris('Çift adı', 'cift_adi', c.cift_adi, ' placeholder="Gelin - Damat"') + giris('E-posta', 'eposta', c.eposta, ' type="email"') + '</div>' +
@@ -609,6 +610,10 @@
   }
 
   /* ================= TAKVİM ================= */
+  /* Ziyaret planları: kayıtta kaynak = 'ziyaret'; saat, çiftin notunun ilk satırında "Ziyaret planı: GG.AA.YYYY saat SS:DD" olarak durur */
+  function ziyaretSaat(k) { var m = k && k.kaynak === 'ziyaret' ? String(k.musteri_notu || '').match(/(\d{2}:\d{2})/) : null; return m ? m[1] : ''; }
+  function kaynakAd(k, uzun) { return k.kaynak === 'ziyaret' ? (uzun ? 'Siteden ziyaret planı' : 'Ziyaret planı') : k.kaynak === 'teklif' ? (uzun ? 'Siteden teklif talebi' : 'Teklif talebi') : k.kaynak === 'talep' ? (uzun ? 'Siteden talep' : 'Talep') : 'Elle girildi'; }
+  function zTarih(k) { return k.dugun_tarihi ? ((k.kaynak === 'ziyaret' ? 'Ziyaret: ' : '') + O.tarihTR(k.dugun_tarihi) + (ziyaretSaat(k) ? ', ' + ziyaretSaat(k) : '')) : 'Tarih yok'; }
   var takvimAy = (function () { var d = new Date(); return { y: d.getFullYear(), m: d.getMonth() }; })();
   var takvimSalon = '';
   function takvimCiz() {
@@ -627,9 +632,9 @@
     for (var d = 1; d <= gun; d++) {
       var iso = O.isoYap(y, m, d), l = gk[iso] || [], dolu = l.some(function (k) { return DOLU.indexOf(k.durum) > -1; });
       h += '<button class="t-gun' + (iso === bugun ? ' bugun' : '') + (dolu ? ' dolu' : '') + (l.length && !dolu ? ' bekle' : '') + '" data-d="' + iso + '"><span class="t-no">' + d + '</span>' +
-        l.slice(0, 2).map(function (k) { return '<span class="t-ad-k d-' + esc(k.durum) + '">' + esc(k.ad + ' ' + k.soyad.charAt(0) + '.') + '</span>'; }).join('') + (l.length > 2 ? '<span class="t-daha">+' + (l.length - 2) + '</span>' : '') + '</button>';
+        l.slice(0, 2).map(function (k) { return '<span class="t-ad-k d-' + esc(k.durum) + (k.kaynak === 'ziyaret' ? ' zi' : '') + '">' + esc(k.kaynak === 'ziyaret' ? ((ziyaretSaat(k) ? ziyaretSaat(k) + ' ' : '') + k.ad) : (k.ad + ' ' + k.soyad.charAt(0) + '.')) + '</span>'; }).join('') + (l.length > 2 ? '<span class="t-daha">+' + (l.length - 2) + '</span>' : '') + '</button>';
     }
-    h += '</div><p class="not">Yeşil günler onaylı (rezerve, sözleşme ya da tamamlanan) düğünlerdir. Sarı günlerde bekleyen teklif ve talepler vardır.</p>';
+    h += '</div><p class="not">Yeşil günler onaylı (rezerve, sözleşme ya da tamamlanan) düğünlerdir. Sarı günlerde bekleyen teklif ve talepler vardır. Mavi etiketler ziyaret planlarıdır (saat ve ad).</p>';
     aktifSayfa().innerHTML = h;
     $('#tOnce').addEventListener('click', function () { takvimAy.m--; if (takvimAy.m < 0) { takvimAy.m = 11; takvimAy.y--; } takvimCiz(); });
     $('#tSonra').addEventListener('click', function () { takvimAy.m++; if (takvimAy.m > 11) { takvimAy.m = 0; takvimAy.y++; } takvimCiz(); });
@@ -638,7 +643,7 @@
     $('.takvim').addEventListener('click', function (e) { var b = e.target.closest('.t-gun[data-d]'); if (b) gunAc(b.getAttribute('data-d'), gk[b.getAttribute('data-d')] || []); });
   }
   function gunAc(iso, liste) {
-    var h = liste.length ? liste.map(function (k) { return '<button class="kayit" data-id="' + esc(k.id) + '"><div class="k-ust"><b>' + esc(k.ad + ' ' + k.soyad) + '</b>' + rozet(k.durum) + '</div><div class="k-alt"><span>' + esc(salonAd(k.salon_id) || 'Salon seçilmedi') + '</span>' + (k.kisi_sayisi ? '<span>' + esc(k.kisi_sayisi) + ' kişi</span>' : '') + '</div></button>'; }).join('') : '<div class="bos kucuk-bos">Bu gün için kayıt yok.</div>';
+    var h = liste.length ? liste.map(function (k) { return '<button class="kayit" data-id="' + esc(k.id) + '"><div class="k-ust"><b>' + esc(k.ad + ' ' + k.soyad) + '</b>' + rozet(k.durum) + '</div><div class="k-alt"><span>' + esc(k.kaynak === 'ziyaret' ? ('Ziyaret planı' + (ziyaretSaat(k) ? ' · ' + ziyaretSaat(k) : '')) : (salonAd(k.salon_id) || 'Salon seçilmedi')) + '</span>' + (k.kisi_sayisi ? '<span>' + esc(k.kisi_sayisi) + ' kişi</span>' : '') + '</div></button>'; }).join('') : '<div class="bos kucuk-bos">Bu gün için kayıt yok.</div>';
     h += '<button class="btn ana tam" id="gunEkle" style="margin-top:12px">Bu güne kayıt ekle</button>';
     var p = pencere(O.tarihTR(iso), h);
     $$('.kayit', p.ic).forEach(function (b) { b.addEventListener('click', function () { p.kapat(); kayitAc(b.getAttribute('data-id')); }); });
@@ -909,7 +914,7 @@
   }
 
   /* ================= SİTE AYARI ================= */
-  var BOLUMLER = [['tarih_sorgu', 'Villora\'da sizin gününüz hangisi? (tarih sorgusu)'], ['galeri', 'Villora\'yı Keşfedin: galeri'], ['ozellikler', 'Villora\'yı Keşfedin: mekan özellikleri'], ['dx_dugun', 'Villora Deneyimi: Düğün Günü Hazırlığı'], ['makeup', 'Villora Deneyimi: Saç ve makyaj'], ['dx_teklif', 'Villora Deneyimi: Evlilik Teklifi'], ['dx_ozel', 'Villora Deneyimi: Özel Kutlamalar'], ['dx_davet', 'Villora Deneyimi: Size Özel Davetler'], ['firmalar', 'Villora Deneyimi: Anlaşmalı firmalar'], ['foto_dergi', 'Foto Dergi'], ['menu', 'Paketler (menüler)'], ['teklif', 'Teklif al'], ['talep', 'Talep gir'], ['ciftlerimiz', 'Villora çiftleri'], ['hakkimizda', 'Hakkımızda bandı'], ['cift_ozel', 'Çiftlere özel giriş (foto ve video indir)'], ['shorts', 'Villora\'dan anlar (kısa videolar)'], ['klipler', 'Kliplerimiz (klip videoları)'], ['foto_imaj', 'Foto İmaj (fotoğraf hazırlama uygulaması)'], ['movi_imaj', 'Movi İmaj (video kurgu uygulaması)'], ['imaj_ad', 'Foto ve video çıktılarına mekan adını silik yazı olarak ekle'], ['yakinda', 'Hazır olmayan kutuları "Yakında" diye göster']];
+  var BOLUMLER = [['tarih_sorgu', 'Villora\'da sizin gününüz hangisi? (tarih sorgusu)'], ['ziyaret', 'Ziyaret planla (takvimli form)'], ['galeri', 'Villora\'yı Keşfedin: galeri'], ['ozellikler', 'Villora\'yı Keşfedin: mekan özellikleri'], ['dx_dugun', 'Villora Deneyimi: Düğün Günü Hazırlığı'], ['makeup', 'Villora Deneyimi: Saç ve makyaj'], ['dx_teklif', 'Villora Deneyimi: Evlilik Teklifi'], ['dx_ozel', 'Villora Deneyimi: Özel Kutlamalar'], ['dx_davet', 'Villora Deneyimi: Size Özel Davetler'], ['firmalar', 'Villora Deneyimi: Anlaşmalı firmalar'], ['foto_dergi', 'Foto Dergi'], ['menu', 'Paketler (menüler)'], ['teklif', 'Teklif al'], ['talep', 'Talep gir'], ['ciftlerimiz', 'Villora çiftleri'], ['hakkimizda', 'Hakkımızda bandı'], ['cift_ozel', 'Çiftlere özel giriş (foto ve video indir)'], ['shorts', 'Villora\'dan anlar (kısa videolar)'], ['klipler', 'Kliplerimiz (klip videoları)'], ['foto_imaj', 'Foto İmaj (fotoğraf hazırlama uygulaması)'], ['movi_imaj', 'Movi İmaj (video kurgu uygulaması)'], ['imaj_ad', 'Foto ve video çıktılarına mekan adını silik yazı olarak ekle'], ['yakinda', 'Hazır olmayan kutuları "Yakında" diye göster']];
   function ayarCiz() {
     var b = M.bolumler || {};
     function gorselAlan(ad, e, deger, yardim) {

@@ -125,6 +125,8 @@
     telefon_gecersiz: 'Telefon numarasını başında 0 ile, 11 haneli yazın. Örnek: 0532 123 45 67',
     eposta_gecersiz: 'E-posta adresi geçersiz görünüyor. Örnek: ad@ornek.com',
     tarih_gecersiz: 'Düğün tarihi bugünden sonra olmalı.',
+    ziyaret_tarih_gecersiz: 'Ziyaret tarihi bugünden önce olamaz.',
+    saat_gecersiz: 'Ziyaret saatini seçin.',
     kvkk_onayi_gerekli: 'Devam etmek için aydınlatma metnini onaylayın.',
     not_cok_uzun: 'Notunuz çok uzun. 1500 karakteri geçmeyin.',
     cok_fazla_kalem: 'Çok fazla hizmet seçildi.',

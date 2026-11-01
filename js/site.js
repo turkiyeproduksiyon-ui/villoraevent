@@ -215,7 +215,7 @@
     }
 
     if (D.menu.length && acik('menu')) {
-      h += '<section class="vt vt-menuler" id="menulerK"><div class="vt-kap"><div class="vt-baslik"><h2>Menülerimiz</h2><p>Size uygun menüyü seçin. Her menünün içeriği ve dahil hizmetleri kartın içinde.</p></div><div class="vt-seri">';
+      h += '<section class="vt vt-menuler" id="menulerK"><div class="vt-kap"><div class="vt-baslik"><h2>Paketleri keşfet</h2><p>Size uygun menüyü seçin. Her menünün içeriği ve dahil hizmetleri kartın içinde.</p></div><div class="vt-seri">';
       D.menu.forEach(function (m, i) {
         var bl = O.menuAyir ? O.menuAyir(m.icerik) : [], hz = O.satirlar ? O.satirlar(m.dahil_hizmetler) : [];
         var etiket = bl.map(function (x) { return bolumAdi(x.baslik); }).filter(Boolean);
@@ -319,8 +319,9 @@
       makyajVar && acik('makeup') ? { ad: makyajBaslik, alt: 'Düğün öncesi hazırlığın her adımı', i: 'makyaj', x: 'makyaj' } : null
     ]);
     mg('Paketler ve teklif', [
-      D.menu.length && acik('menu') ? { ad: 'Paketler', alt: 'Menüleri inceleyin, kişi başı fiyatları görün', i: 'tabak', a: 'menulerK' } : null,
+      D.menu.length && acik('menu') ? { ad: 'Paketleri keşfet', alt: 'Menüleri inceleyin, kişi başı fiyatları görün', i: 'tabak', a: 'menulerK' } : null,
       acik('firmalar') ? { ad: 'Anlaşmalı firmalar', alt: 'Gelin arabası, çiçekçi, fotoğrafçı, bando, catering', i: 'el', x: 'firmalar' } : null,
+      acik('ziyaret') ? { ad: 'Ziyaret planla', alt: 'Gün ve saat seçin, sizi bekleyelim', i: 'takvim', x: 'ziyaret' } : null,
       acik('teklif') ? { ad: 'Teklif al', alt: 'Tarihinizi ve isteklerinizi iletin', i: 'belge', x: 'teklif', v: true } : null
     ]);
     mg('Çiftlerimiz', [
@@ -337,7 +338,8 @@
       { ad: 'İletişim', alt: 'WhatsApp, telefon, adres ve harita', i: 'telefon', a: 'iletisimK' }
     ]);
     MENUG = MG;
-    var nav = (acik('teklif') ? '<button type="button" class="btn ana kucuk ust-cta" data-islem="teklif">Teklif al</button>' : '');
+    var nav = (acik('ziyaret') ? '<button type="button" class="btn cizgi kucuk ust-cta" data-islem="ziyaret">Ziyaret planla</button>' : '') +
+      (acik('teklif') ? '<button type="button" class="btn ana kucuk ust-cta" data-islem="teklif">Teklif al</button>' : '');
     h = h.replace('<!--NAV-->', nav);
     $('#uygulama').innerHTML = '<div class="sayfa">' + h + '</div>';
     VIDEOLAR = videolar;
@@ -395,7 +397,7 @@
   /* ---------- Olaylar ---------- */
   function islemCalistir(k, ek) {
     if (k.indexOf('dx_') === 0) { deneyimAc(k.slice(3)); return; }
-    ({ fiyatlar: fiyatlarAc, kesfet: kesfetGit, teklif: function () { formAc('teklif', ek); }, talep: function () { formAc('teklif', ek); },
+    ({ fiyatlar: fiyatlarAc, kesfet: kesfetGit, ziyaret: ziyaretAc, teklif: function () { formAc('teklif', ek); }, talep: function () { formAc('teklif', ek); },
       firmalar: firmalarAc, dergi: dergiAc, ciftler: ciftlerAc, menu: menuAc, ozellikler: ozelliklerAc, galeri: galeriAc, makyaj: makyajAc })[k]();
   }
 
@@ -842,6 +844,95 @@
         '<button class="btn cizgi tam" id="tamam">Tamam</button></div>';
       $('#tamam', ic).addEventListener('click', kapatPencere);
     }, function (e) { dugme.disabled = false; dugme.textContent = 'Tekrar dene'; hata(O.hataMetni(e)); });
+  }
+
+  /* ---------- Ziyaret planla: takvim + saat + bilgiler ---------- */
+  var GUNLER = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+  var SAATLER = (function () { var a = []; for (var h = 10; h <= 18; h++) { a.push((h < 10 ? '0' : '') + h + ':00'); if (h < 18) a.push(h + ':30'); } return a; })();
+  function ziyaretAc() {
+    var bg = new Date(), ay = { y: bg.getFullYear(), m: bg.getMonth() }, sec = { t: '', s: '' };
+    var bugun = O.bugunISO();
+    var h = '<form id="zf" novalidate><p class="not" style="margin:0 0 14px">Villora\'yı gezmek için bir gün ve saat seçin. ' + esc(M.ad) + ' randevunuzu onaylamak için sizinle iletişime geçer.</p>' +
+      '<div class="zt" id="ztKap"></div>' +
+      '<div class="zt-saat-kap" id="ztSaat"></div>' +
+      '<p class="zt-ozet" id="ztOzet" aria-live="polite"></p>' +
+      '<div class="ikili"><label class="alan"><span>Adınız</span><input name="ad" autocomplete="given-name" required></label>' +
+      '<label class="alan"><span>Soyadınız</span><input name="soyad" autocomplete="family-name" required></label></div>' +
+      '<label class="alan"><span>Telefon</span><input name="tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="0532 123 45 67" required></label>' +
+      '<label class="alan"><span>E-posta</span><input name="eposta" type="email" inputmode="email" autocomplete="email" placeholder="ad@ornek.com" required></label>' +
+      '<label class="alan"><span>Eklemek istedikleriniz <em>(isteğe bağlı)</em></span><textarea name="not" maxlength="600"></textarea></label>' +
+      '<label class="onay"><input type="checkbox" name="kvkk"><span>Kişisel verilerimin ziyaret planlaması için işlenmesine ilişkin <button type="button" class="kvkk-link" style="border:0;background:none;padding:0;text-decoration:underline">aydınlatma metnini</button> okudum, onaylıyorum.</span></label>' +
+      '<div id="zfHata"></div><button class="btn ana tam" type="submit">Ziyaret planını gönder</button></form>';
+    var ic = pencere('Ziyaret planla', h);
+    var f = $('#zf', ic);
+    $('.kvkk-link', ic).addEventListener('click', kvkkAc);
+    function ozet() {
+      var e = $('#ztOzet', ic);
+      e.textContent = sec.t ? (O.tarihTR(sec.t) + ' ' + GUNLER[O.tarihNesne(sec.t).getDay()] + (sec.s ? ', saat ' + sec.s : ' için saat seçin')) : '';
+    }
+    function saatCiz() {
+      var kap = $('#ztSaat', ic);
+      if (!sec.t) { kap.innerHTML = ''; return; }
+      var simdi = new Date(), bugunMu = sec.t === bugun, sn = simdi.getHours() * 60 + simdi.getMinutes() + 60;
+      kap.innerHTML = '<span class="zt-etiket">Saat seçin</span><div class="zt-saatler" role="radiogroup" aria-label="Ziyaret saati">' + SAATLER.map(function (s) {
+        var p = s.split(':'), gecti = bugunMu && (+p[0] * 60 + +p[1]) < sn;
+        return '<button type="button" class="zt-s' + (s === sec.s ? ' sec' : '') + '" data-s="' + s + '" role="radio" aria-checked="' + (s === sec.s) + '"' + (gecti ? ' disabled' : '') + '>' + s + '</button>';
+      }).join('') + '</div>';
+    }
+    function takvimCiz() {
+      var ilk = new Date(ay.y, ay.m, 1), gun = new Date(ay.y, ay.m + 1, 0).getDate(), bos = (ilk.getDay() + 6) % 7;
+      var enAz = ay.y === bg.getFullYear() && ay.m === bg.getMonth(), enCok = (ay.y - bg.getFullYear()) * 12 + ay.m - bg.getMonth() >= 12;
+      var k = '<div class="zt-ust"><button type="button" class="zt-ok" id="ztOnce" aria-label="Önceki ay"' + (enAz ? ' disabled' : '') + '>' + ik('sol', 18) + '</button><b>' + O.AYLAR[ay.m] + ' ' + ay.y + '</b><button type="button" class="zt-ok" id="ztSonra" aria-label="Sonraki ay"' + (enCok ? ' disabled' : '') + '>' + ik('sag', 18) + '</button></div>' +
+        '<div class="zt-izgara" role="grid">' + ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map(function (g) { return '<span class="zt-g">' + g + '</span>'; }).join('');
+      for (var i = 0; i < bos; i++) k += '<span class="zt-bos"></span>';
+      for (var d = 1; d <= gun; d++) {
+        var iso = O.isoYap(ay.y, ay.m, d), gecmis = iso < bugun;
+        k += '<button type="button" class="zt-d' + (iso === bugun ? ' bugun' : '') + (iso === sec.t ? ' sec' : '') + '" data-t="' + iso + '"' + (gecmis ? ' disabled' : '') + ' aria-label="' + d + ' ' + O.AYLAR[ay.m] + '">' + d + '</button>';
+      }
+      $('#ztKap', ic).innerHTML = k + '</div>';
+    }
+    takvimCiz(); saatCiz(); ozet();
+    ic.addEventListener('click', function (e) {
+      var d = e.target.closest('.zt-d[data-t]');
+      if (d) { sec.t = d.getAttribute('data-t'); sec.s = ''; takvimCiz(); saatCiz(); ozet(); return; }
+      var s = e.target.closest('.zt-s[data-s]');
+      if (s) { sec.s = s.getAttribute('data-s'); saatCiz(); ozet(); return; }
+      if (e.target.closest('#ztOnce')) { ay.m--; if (ay.m < 0) { ay.m = 11; ay.y--; } takvimCiz(); return; }
+      if (e.target.closest('#ztSonra')) { ay.m++; if (ay.m > 11) { ay.m = 0; ay.y++; } takvimCiz(); }
+    });
+    f.addEventListener('submit', function (e) { e.preventDefault(); ziyaretGonder(f, ic, sec); });
+  }
+  function ziyaretGonder(f, ic, sec) {
+    var v = function (n) { var x = f.elements[n]; return x ? String(x.value || '').trim() : ''; };
+    var kutu = $('#zfHata', ic);
+    function hata(m) { kutu.innerHTML = '<div class="hata-kutu" role="alert">' + esc(m) + '</div>'; kutu.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+    var tel = v('tel').replace(/\D/g, '');
+    if (!sec.t) return hata('Takvimden bir gün seçin.');
+    if (sec.t < O.bugunISO()) return hata(O.hataMetni({ message: 'ziyaret_tarih_gecersiz' }));
+    if (!sec.s) return hata(O.hataMetni({ message: 'saat_gecersiz' }));
+    if (v('ad').length < 2 || v('soyad').length < 2) return hata(O.hataMetni({ message: 'ad_soyad_gerekli' }));
+    if (tel.length < 10 || tel.length > 13) return hata(O.hataMetni({ message: 'telefon_gecersiz' }));
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v('eposta'))) return hata(O.hataMetni({ message: 'eposta_gecersiz' }));
+    if (!f.elements.kvkk.checked) return hata(O.hataMetni({ message: 'kvkk_onayi_gerekli' }));
+    var gun = O.tarihTR(sec.t) + ' ' + GUNLER[O.tarihNesne(sec.t).getDay()] + ', saat ' + sec.s;
+    var wa = O.waLink(M.whatsapp || M.telefon, 'Merhaba, ' + gun + ' için ' + M.ad + '\'i ziyaret etmeyi planlıyorum. Adım: ' + v('ad') + ' ' + v('soyad') + ', telefonum: ' + v('tel') + '.');
+    function bitti(not, hazir) {
+      ic.innerHTML = '<div class="ok-kutu" role="status"><b style="display:block;font-size:18px;margin-bottom:4px">' + (hazir ? 'Ziyaret planınız hazır' : 'Ziyaret planınız alındı') + '</b>' + esc(gun) + '.<br>' + esc(M.ad) + not + '</div>' +
+        '<div style="display:grid;gap:10px;margin-top:16px">' + (wa ? '<a class="btn hafif tam" target="_blank" rel="noopener" href="' + esc(wa) + '">' + ik('whatsapp', 20) + 'WhatsApp\'tan da gönderin</a>' : '') +
+        '<button class="btn cizgi tam" id="tamam">Tamam</button></div>';
+      $('#tamam', ic).addEventListener('click', kapatPencere);
+    }
+    var dugme = $('button[type=submit]', f); dugme.disabled = true; dugme.textContent = 'Gönderiliyor...';
+    sb.rpc('ziyaret_olustur', { p_slug: A.MEKAN_SLUG, p_ad: v('ad'), p_soyad: v('soyad'), p_telefon: v('tel'), p_eposta: v('eposta'), p_tarih: sec.t, p_saat: sec.s, p_not: v('not') || null, p_kvkk: true })
+      .then(function (r) {
+        if (r.error) {
+          var yok = r.error.code === 'PGRST202' || /ziyaret_olustur|Could not find the function|schema cache/i.test(r.error.message || '');
+          if (yok && wa) { return bitti(' ziyaretinizi onaylamak için WhatsApp\'tan yazmanızı bekliyor. Aşağıdaki butona dokunup mesajı gönderin.', true); }
+          dugme.disabled = false; dugme.textContent = 'Ziyaret planını gönder';
+          return hata(O.hataMetni(r.error));
+        }
+        bitti(' ziyaretinizi onaylamak için ' + esc(v('eposta')) + ' adresinize ya da telefonunuza dönüş yapacak.');
+      }, function (e) { dugme.disabled = false; dugme.textContent = 'Tekrar dene'; hata(O.hataMetni(e)); });
   }
 
   /* ---------- Aydınlatma metni ---------- */

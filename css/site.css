@@ -667,3 +667,30 @@ input[type="date"] { min-height: 48px; width: 100%; box-sizing: border-box; }
 .m-oge.vurgu { background: color-mix(in srgb, var(--accent) 9%, #fff); }
 .m-oge.vurgu b { color: var(--accent); }
 .m-oge .ik { flex: none; }
+
+/* v47: Ziyaret planla (takvim) ve masaüstünde büyük menü düğmesi */
+@media (min-width: 960px) {
+  .menu-dugme { width: 56px; height: 56px; }
+  .menu-dugme svg { width: 32px; height: 32px; }
+}
+.zt { border: 1px solid var(--line); border-radius: 16px; padding: 12px; background: var(--surface); }
+.zt-ust { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.zt-ust b { font: 600 17px/1.2 var(--serif); }
+.zt-ok { width: 44px; height: 44px; border: 0; background: transparent; border-radius: 50%; display: grid; place-items: center; color: var(--ink); }
+.zt-ok:hover:not(:disabled) { background: var(--bg); }
+.zt-ok:disabled { opacity: .3; }
+.zt-izgara { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.zt-g { text-align: center; font-size: 12.5px; font-weight: 600; color: var(--ink-2); padding: 4px 0; }
+.zt-d { min-height: 44px; border: 1.5px solid transparent; border-radius: 10px; background: transparent; font: 600 15px/1 inherit; color: var(--ink); }
+.zt-d:hover:not(:disabled) { background: var(--bg); }
+.zt-d:disabled { color: color-mix(in srgb, var(--ink-2) 45%, #fff); }
+.zt-d.bugun { border-color: var(--accent); }
+.zt-d.sec { background: var(--accent); color: #fff; border-color: var(--accent); }
+.zt-saat-kap { margin: 12px 0 4px; }
+.zt-etiket { display: block; font-weight: 600; font-size: 14.5px; margin-bottom: 8px; }
+.zt-saatler { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.zt-s { min-height: 44px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); font: 600 15px/1 inherit; color: var(--ink); }
+.zt-s:hover:not(:disabled) { border-color: var(--accent); }
+.zt-s:disabled { opacity: .35; }
+.zt-s.sec { background: var(--accent); color: #fff; border-color: var(--accent); }
+.zt-ozet { min-height: 22px; margin: 10px 0 14px; font-weight: 600; color: var(--accent); }
